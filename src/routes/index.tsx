@@ -1,24 +1,368 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { motion } from "framer-motion";
+import {
+  ArrowRight,
+  BookOpenCheck,
+  Brain,
+  CalendarClock,
+  CheckCircle2,
+  Compass,
+  FileText,
+  Flame,
+  Sparkles,
+  Target,
+  Timer,
+  TrendingUp,
+} from "lucide-react";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
 export const Route = createFileRoute("/")({
-  component: Index,
+  head: () => ({
+    meta: [
+      { title: "PrepOS — Your AI Command Center for CA Intermediate" },
+      {
+        name: "description",
+        content:
+          "AI-planned study, ICAI-aware chapter tracking, mock analytics, mistake book, and a rescue mode for the final stretch. Built for CA Inter aspirants.",
+      },
+    ],
+  }),
+  component: Landing,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
-function Index() {
+const features = [
+  { icon: Brain, title: "AI Revision Engine", body: "Rebuilds your week when you fall behind. Diagnoses weak chapters from mock scores and converts marks into action items." },
+  { icon: CalendarClock, title: "Dynamic Exam Calendar", body: "Group 1, Group 2, or Both. Editable 3-day or 6-day schedule with live countdown to every paper." },
+  { icon: Target, title: "ICAI-Aware Progress", body: "Every chapter tagged with official ICAI weightage — so the plan chases marks, not busywork." },
+  { icon: FileText, title: "MTP, RTP & PYQ Tracker", body: "Chapter × subject checklist covering May 2024 → May 2026 sessions. Nothing slips through." },
+  { icon: BookOpenCheck, title: "Mistake Book", body: "Every error linked to source, chapter, concept — with a spaced-repetition schedule until it's gone." },
+  { icon: Flame, title: "Rescue Mode", body: "When time is short, PrepOS collapses your plan to only the highest-yield topics per paper." },
+];
+
+const modules = [
+  "Dashboard", "Exam Calendar", "Chapter Progress", "Mock Tracker", "MTP Tracker",
+  "RTP & PYQ", "Mistake Book", "Formula Vault", "AI Planner", "Rescue Mode",
+];
+
+const testimonials = [
+  { name: "Aditi S.", role: "CA Inter · Group 1", quote: "I stopped guessing what to study. Every morning the AI brief just tells me — and it's usually right." },
+  { name: "Rohan M.", role: "CA Inter · Both Groups", quote: "The mistake book alone changed my score. Every wrong question comes back exactly when I'd have forgotten it." },
+  { name: "Kavya P.", role: "CA Inter · Group 2", quote: "Rescue Mode 21 days before exam felt like having a personal mentor triaging my prep." },
+];
+
+const faqs = [
+  { q: "How is this different from Notion or a planner app?", a: "PrepOS is built around the ICAI syllabus, weightage, and paper structure. It doesn't just store tasks — it decides them for you based on your mock scores, mistakes, and time left." },
+  { q: "Which sessions does it cover?", a: "May 2024, September 2024, January 2025, May 2025, September 2025, January 2026, and May 2026 — for RTPs, MTPs, and PYQs." },
+  { q: "Can I use it for just one group?", a: "Yes. Choose Group 1, Group 2, or Both during setup. Exam dates are fully editable for the 3-day or 6-day schedule." },
+  { q: "Is my data private?", a: "Yes. Every record is row-level-secured to your account. Nobody else — not even other students — can see your data." },
+];
+
+function Landing() {
+  return (
+    <div className="min-h-screen bg-background text-foreground">
+      {/* Nav */}
+      <header className="sticky top-0 z-40 border-b border-border/50 bg-background/70 backdrop-blur-xl">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
+          <Link to="/" className="flex items-center gap-2">
+            <div className="grid h-8 w-8 place-items-center rounded-lg bg-gold text-primary-foreground shadow-glow">
+              <Sparkles className="h-4 w-4" strokeWidth={2.5} />
+            </div>
+            <span className="font-display text-xl font-semibold tracking-tight">PrepOS</span>
+          </Link>
+          <nav className="hidden items-center gap-8 md:flex">
+            <a href="#features" className="text-sm text-muted-foreground hover:text-foreground">Features</a>
+            <a href="#modules" className="text-sm text-muted-foreground hover:text-foreground">Modules</a>
+            <a href="#pricing" className="text-sm text-muted-foreground hover:text-foreground">Pricing</a>
+            <a href="#faq" className="text-sm text-muted-foreground hover:text-foreground">FAQ</a>
+          </nav>
+          <div className="flex items-center gap-2">
+            <Link to="/auth" className="hidden text-sm text-muted-foreground hover:text-foreground sm:inline">Sign in</Link>
+            <Link
+              to="/auth"
+              search={{ mode: "signup" }}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-gold px-4 py-2 text-sm font-medium text-primary-foreground shadow-elegant transition hover:opacity-90"
+            >
+              Get started <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+        </div>
+      </header>
+
+      {/* Hero */}
+      <section className="relative bg-hero grain overflow-hidden">
+        <div className="mx-auto max-w-7xl px-6 pb-24 pt-20 md:pt-28">
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="mx-auto max-w-3xl text-center"
+          >
+            <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-border/60 bg-card/50 px-3 py-1 text-xs text-muted-foreground backdrop-blur">
+              <span className="h-1.5 w-1.5 rounded-full bg-gold" />
+              Built for CA Intermediate · May & Sep 2026
+            </div>
+            <h1 className="mt-6 font-display text-5xl font-semibold leading-[1.05] tracking-tight md:text-7xl">
+              The AI <span className="text-gold">command center</span> for your CA Inter attempt.
+            </h1>
+            <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
+              Stop guessing what to study. PrepOS turns the ICAI syllabus, your mocks, and the
+              days left into one thing — the exact next task that maximizes your marks.
+            </p>
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+              <Link
+                to="/auth"
+                search={{ mode: "signup" }}
+                className="inline-flex items-center gap-2 rounded-lg bg-gold px-6 py-3 text-sm font-medium text-primary-foreground shadow-glow transition hover:opacity-90"
+              >
+                Start your attempt <ArrowRight className="h-4 w-4" />
+              </Link>
+              <a
+                href="#features"
+                className="inline-flex items-center gap-2 rounded-lg border border-border bg-card/50 px-6 py-3 text-sm font-medium backdrop-blur hover:bg-accent"
+              >
+                See how it works
+              </a>
+            </div>
+            <p className="mt-4 text-xs text-muted-foreground">
+              No credit card. Works for Group 1, Group 2, or Both.
+            </p>
+          </motion.div>
+
+          {/* Hero mock card */}
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.2 }}
+            className="relative mx-auto mt-16 max-w-5xl"
+          >
+            <div className="rounded-2xl border border-border/70 bg-card/80 p-2 shadow-elegant backdrop-blur">
+              <div className="grid gap-4 rounded-xl bg-background/60 p-6 md:grid-cols-4">
+                <StatTile icon={TrendingUp} label="Readiness" value="72%" hint="+8 this week" tone="gold" />
+                <StatTile icon={Timer} label="Days to Paper 1" value="41" hint="Advanced Accounting" />
+                <StatTile icon={Flame} label="Streak" value="17d" hint="Best: 24" />
+                <StatTile icon={CheckCircle2} label="Today's plan" value="4 / 7" hint="2h 40m done" />
+              </div>
+              <div className="grid gap-4 p-6 md:grid-cols-3">
+                <PlanCard title="AI Brief" body="Focus on GST — Input Tax Credit. Your Sep 2025 MTP dropped 8 marks here." tag="AI · today" />
+                <PlanCard title="Next Task" body="Revise Ind AS 115 — 45 min, then attempt 5 PYQ questions from May 2025." tag="9:30 · scheduled" />
+                <PlanCard title="Rescue Mode" body="Activates in 12 days. Will collapse plan to top 18 chapters by weightage." tag="auto" />
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Features */}
+      <section id="features" className="mx-auto max-w-7xl px-6 py-24">
+        <div className="max-w-2xl">
+          <p className="text-sm uppercase tracking-[0.2em] text-gold">Every rupee of marks, planned</p>
+          <h2 className="mt-3 font-display text-4xl font-semibold md:text-5xl">
+            An operating system, not another tracker.
+          </h2>
+        </div>
+        <div className="mt-14 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {features.map((f) => (
+            <div
+              key={f.title}
+              className="group rounded-2xl border border-border bg-card p-6 transition hover:border-gold/40 hover:shadow-elegant"
+            >
+              <div className="grid h-10 w-10 place-items-center rounded-lg bg-accent text-gold">
+                <f.icon className="h-5 w-5" />
+              </div>
+              <h3 className="mt-5 font-display text-xl font-semibold">{f.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{f.body}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Modules strip */}
+      <section id="modules" className="border-y border-border bg-card/40">
+        <div className="mx-auto max-w-7xl px-6 py-16">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p className="text-sm uppercase tracking-[0.2em] text-gold">Ten modules, one workspace</p>
+              <h2 className="mt-3 font-display text-3xl font-semibold md:text-4xl">Everything the syllabus demands.</h2>
+            </div>
+            <p className="max-w-sm text-sm text-muted-foreground">
+              Each module is fully editable — create, edit, delete anything, from paper dates to formulas.
+            </p>
+          </div>
+          <div className="mt-10 flex flex-wrap gap-3">
+            {modules.map((m) => (
+              <div key={m} className="rounded-full border border-border bg-background px-4 py-2 text-sm">
+                <Compass className="mr-2 inline h-3.5 w-3.5 text-gold" />
+                {m}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials */}
+      <section className="mx-auto max-w-7xl px-6 py-24">
+        <h2 className="max-w-2xl font-display text-4xl font-semibold md:text-5xl">
+          Students who ship attempts, not stress.
+        </h2>
+        <div className="mt-12 grid gap-6 md:grid-cols-3">
+          {testimonials.map((t) => (
+            <figure key={t.name} className="rounded-2xl border border-border bg-card p-6">
+              <blockquote className="font-display text-lg leading-snug">"{t.quote}"</blockquote>
+              <figcaption className="mt-6 text-sm text-muted-foreground">
+                <div className="font-medium text-foreground">{t.name}</div>
+                {t.role}
+              </figcaption>
+            </figure>
+          ))}
+        </div>
+      </section>
+
+      {/* Pricing */}
+      <section id="pricing" className="border-y border-border bg-card/40">
+        <div className="mx-auto grid max-w-7xl gap-8 px-6 py-24 md:grid-cols-3">
+          <PricingCard name="Solo" price="Free" tagline="Start your attempt today." features={["All modules", "1 exam group", "Basic AI brief"]} />
+          <PricingCard name="Aspirant" price="₹499" period="/mo" featured tagline="For serious CA Inter takers." features={["Everything in Solo", "AI Revision Engine", "Rescue Mode", "Weekly AI Review", "Unlimited mocks"]} />
+          <PricingCard name="Mentor" price="₹1,499" period="/mo" tagline="For coaching institutes." features={["Everything in Aspirant", "Multi-student cohort", "Analytics for mentors", "Priority support"]} />
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section id="faq" className="mx-auto max-w-4xl px-6 py-24">
+        <h2 className="font-display text-4xl font-semibold md:text-5xl">Questions, answered.</h2>
+        <div className="mt-10 divide-y divide-border rounded-2xl border border-border bg-card">
+          {faqs.map((f) => (
+            <details key={f.q} className="group px-6 py-5 open:bg-accent/30">
+              <summary className="flex cursor-pointer items-center justify-between text-base font-medium">
+                {f.q}
+                <span className="ml-4 text-gold transition group-open:rotate-45">＋</span>
+              </summary>
+              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{f.a}</p>
+            </details>
+          ))}
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="mx-auto max-w-7xl px-6 pb-24">
+        <div className="relative overflow-hidden rounded-3xl border border-border bg-hero p-12 text-center md:p-20">
+          <h2 className="font-display text-4xl font-semibold md:text-6xl">
+            Your next attempt starts with your <span className="text-gold">next task</span>.
+          </h2>
+          <p className="mx-auto mt-4 max-w-xl text-muted-foreground">
+            Set up your exam calendar in under 3 minutes. PrepOS handles the rest.
+          </p>
+          <Link
+            to="/auth"
+            search={{ mode: "signup" }}
+            className="mt-8 inline-flex items-center gap-2 rounded-lg bg-gold px-6 py-3 text-sm font-medium text-primary-foreground shadow-glow transition hover:opacity-90"
+          >
+            Create your PrepOS <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
+      </section>
+
+      <footer className="border-t border-border">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-6 py-8 text-sm text-muted-foreground md:flex-row">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-gold" />
+            <span>PrepOS · Built for CA Intermediate</span>
+          </div>
+          <div>© {new Date().getFullYear()} PrepOS. All rights reserved.</div>
+        </div>
+      </footer>
+    </div>
+  );
+}
+
+function StatTile({
+  icon: Icon,
+  label,
+  value,
+  hint,
+  tone,
+}: {
+  icon: typeof TrendingUp;
+  label: string;
+  value: string;
+  hint: string;
+  tone?: "gold";
+}) {
+  return (
+    <div className="rounded-xl border border-border bg-card p-4">
+      <div className="flex items-center justify-between text-muted-foreground">
+        <span className="text-xs uppercase tracking-wider">{label}</span>
+        <Icon className={`h-4 w-4 ${tone === "gold" ? "text-gold" : ""}`} />
+      </div>
+      <div className="mt-3 font-display text-3xl font-semibold">{value}</div>
+      <div className="mt-1 text-xs text-muted-foreground">{hint}</div>
+    </div>
+  );
+}
+
+function PlanCard({ title, body, tag }: { title: string; body: string; tag: string }) {
+  return (
+    <div className="rounded-xl border border-border bg-card p-5">
+      <div className="flex items-center justify-between">
+        <h4 className="font-display text-base font-semibold">{title}</h4>
+        <span className="rounded-full bg-accent px-2 py-0.5 text-[10px] uppercase tracking-wider text-gold">
+          {tag}
+        </span>
+      </div>
+      <p className="mt-3 text-sm text-muted-foreground">{body}</p>
+    </div>
+  );
+}
+
+function PricingCard({
+  name,
+  price,
+  period,
+  tagline,
+  features,
+  featured,
+}: {
+  name: string;
+  price: string;
+  period?: string;
+  tagline: string;
+  features: string[];
+  featured?: boolean;
+}) {
   return (
     <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
+      className={`relative rounded-2xl border p-8 ${
+        featured ? "border-gold/60 bg-card shadow-glow" : "border-border bg-card"
+      }`}
     >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
+      {featured && (
+        <div className="absolute -top-3 left-6 rounded-full bg-gold px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-primary-foreground">
+          Most popular
+        </div>
+      )}
+      <h3 className="font-display text-2xl font-semibold">{name}</h3>
+      <p className="mt-1 text-sm text-muted-foreground">{tagline}</p>
+      <div className="mt-6 flex items-end gap-1">
+        <span className="font-display text-5xl font-semibold">{price}</span>
+        {period && <span className="pb-2 text-sm text-muted-foreground">{period}</span>}
+      </div>
+      <ul className="mt-6 space-y-2 text-sm">
+        {features.map((f) => (
+          <li key={f} className="flex items-start gap-2">
+            <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-gold" />
+            {f}
+          </li>
+        ))}
+      </ul>
+      <Link
+        to="/auth"
+        search={{ mode: "signup" }}
+        className={`mt-8 inline-flex w-full items-center justify-center rounded-lg px-4 py-2.5 text-sm font-medium transition ${
+          featured
+            ? "bg-gold text-primary-foreground hover:opacity-90"
+            : "border border-border hover:bg-accent"
+        }`}
+      >
+        Get started
+      </Link>
     </div>
   );
 }
