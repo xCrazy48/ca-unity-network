@@ -16,6 +16,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedPapersRouteImport } from './routes/_authenticated/papers'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
+import { Route as AuthenticatedMtpRouteImport } from './routes/_authenticated/mtp'
 import { Route as AuthenticatedMocksRouteImport } from './routes/_authenticated/mocks'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedChaptersRouteImport } from './routes/_authenticated/chapters'
@@ -55,6 +56,11 @@ const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
   path: '/onboarding',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedMtpRoute = AuthenticatedMtpRouteImport.update({
+  id: '/mtp',
+  path: '/mtp',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedMocksRoute = AuthenticatedMocksRouteImport.update({
   id: '/mocks',
   path: '/mocks',
@@ -84,6 +90,7 @@ export interface FileRoutesByFullPath {
   '/chapters': typeof AuthenticatedChaptersRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/mocks': typeof AuthenticatedMocksRoute
+  '/mtp': typeof AuthenticatedMtpRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/papers': typeof AuthenticatedPapersRoute
   '/profile': typeof AuthenticatedProfileRoute
@@ -96,6 +103,7 @@ export interface FileRoutesByTo {
   '/chapters': typeof AuthenticatedChaptersRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/mocks': typeof AuthenticatedMocksRoute
+  '/mtp': typeof AuthenticatedMtpRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/papers': typeof AuthenticatedPapersRoute
   '/profile': typeof AuthenticatedProfileRoute
@@ -110,6 +118,7 @@ export interface FileRoutesById {
   '/_authenticated/chapters': typeof AuthenticatedChaptersRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/mocks': typeof AuthenticatedMocksRoute
+  '/_authenticated/mtp': typeof AuthenticatedMtpRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/papers': typeof AuthenticatedPapersRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
@@ -124,6 +133,7 @@ export interface FileRouteTypes {
     | '/chapters'
     | '/dashboard'
     | '/mocks'
+    | '/mtp'
     | '/onboarding'
     | '/papers'
     | '/profile'
@@ -136,6 +146,7 @@ export interface FileRouteTypes {
     | '/chapters'
     | '/dashboard'
     | '/mocks'
+    | '/mtp'
     | '/onboarding'
     | '/papers'
     | '/profile'
@@ -149,6 +160,7 @@ export interface FileRouteTypes {
     | '/_authenticated/chapters'
     | '/_authenticated/dashboard'
     | '/_authenticated/mocks'
+    | '/_authenticated/mtp'
     | '/_authenticated/onboarding'
     | '/_authenticated/papers'
     | '/_authenticated/profile'
@@ -212,6 +224,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOnboardingRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/mtp': {
+      id: '/_authenticated/mtp'
+      path: '/mtp'
+      fullPath: '/mtp'
+      preLoaderRoute: typeof AuthenticatedMtpRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/mocks': {
       id: '/_authenticated/mocks'
       path: '/mocks'
@@ -248,6 +267,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedChaptersRoute: typeof AuthenticatedChaptersRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedMocksRoute: typeof AuthenticatedMocksRoute
+  AuthenticatedMtpRoute: typeof AuthenticatedMtpRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedPapersRoute: typeof AuthenticatedPapersRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
@@ -258,6 +278,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedChaptersRoute: AuthenticatedChaptersRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedMocksRoute: AuthenticatedMocksRoute,
+  AuthenticatedMtpRoute: AuthenticatedMtpRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedPapersRoute: AuthenticatedPapersRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
