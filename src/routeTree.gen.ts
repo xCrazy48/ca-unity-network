@@ -20,6 +20,7 @@ import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authentic
 import { Route as AuthenticatedMtpRouteImport } from './routes/_authenticated/mtp'
 import { Route as AuthenticatedMocksRouteImport } from './routes/_authenticated/mocks'
 import { Route as AuthenticatedMistakesRouteImport } from './routes/_authenticated/mistakes'
+import { Route as AuthenticatedFormulasRouteImport } from './routes/_authenticated/formulas'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedChaptersRouteImport } from './routes/_authenticated/chapters'
 import { Route as AuthenticatedCalendarRouteImport } from './routes/_authenticated/calendar'
@@ -78,6 +79,11 @@ const AuthenticatedMistakesRoute = AuthenticatedMistakesRouteImport.update({
   path: '/mistakes',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedFormulasRoute = AuthenticatedFormulasRouteImport.update({
+  id: '/formulas',
+  path: '/formulas',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -101,6 +107,7 @@ export interface FileRoutesByFullPath {
   '/calendar': typeof AuthenticatedCalendarRoute
   '/chapters': typeof AuthenticatedChaptersRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/formulas': typeof AuthenticatedFormulasRoute
   '/mistakes': typeof AuthenticatedMistakesRoute
   '/mocks': typeof AuthenticatedMocksRoute
   '/mtp': typeof AuthenticatedMtpRoute
@@ -116,6 +123,7 @@ export interface FileRoutesByTo {
   '/calendar': typeof AuthenticatedCalendarRoute
   '/chapters': typeof AuthenticatedChaptersRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/formulas': typeof AuthenticatedFormulasRoute
   '/mistakes': typeof AuthenticatedMistakesRoute
   '/mocks': typeof AuthenticatedMocksRoute
   '/mtp': typeof AuthenticatedMtpRoute
@@ -133,6 +141,7 @@ export interface FileRoutesById {
   '/_authenticated/calendar': typeof AuthenticatedCalendarRoute
   '/_authenticated/chapters': typeof AuthenticatedChaptersRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/formulas': typeof AuthenticatedFormulasRoute
   '/_authenticated/mistakes': typeof AuthenticatedMistakesRoute
   '/_authenticated/mocks': typeof AuthenticatedMocksRoute
   '/_authenticated/mtp': typeof AuthenticatedMtpRoute
@@ -150,6 +159,7 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/chapters'
     | '/dashboard'
+    | '/formulas'
     | '/mistakes'
     | '/mocks'
     | '/mtp'
@@ -165,6 +175,7 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/chapters'
     | '/dashboard'
+    | '/formulas'
     | '/mistakes'
     | '/mocks'
     | '/mtp'
@@ -181,6 +192,7 @@ export interface FileRouteTypes {
     | '/_authenticated/calendar'
     | '/_authenticated/chapters'
     | '/_authenticated/dashboard'
+    | '/_authenticated/formulas'
     | '/_authenticated/mistakes'
     | '/_authenticated/mocks'
     | '/_authenticated/mtp'
@@ -276,6 +288,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMistakesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/formulas': {
+      id: '/_authenticated/formulas'
+      path: '/formulas'
+      fullPath: '/formulas'
+      preLoaderRoute: typeof AuthenticatedFormulasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -304,6 +323,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedCalendarRoute: typeof AuthenticatedCalendarRoute
   AuthenticatedChaptersRoute: typeof AuthenticatedChaptersRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedFormulasRoute: typeof AuthenticatedFormulasRoute
   AuthenticatedMistakesRoute: typeof AuthenticatedMistakesRoute
   AuthenticatedMocksRoute: typeof AuthenticatedMocksRoute
   AuthenticatedMtpRoute: typeof AuthenticatedMtpRoute
@@ -317,6 +337,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCalendarRoute: AuthenticatedCalendarRoute,
   AuthenticatedChaptersRoute: AuthenticatedChaptersRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedFormulasRoute: AuthenticatedFormulasRoute,
   AuthenticatedMistakesRoute: AuthenticatedMistakesRoute,
   AuthenticatedMocksRoute: AuthenticatedMocksRoute,
   AuthenticatedMtpRoute: AuthenticatedMtpRoute,
