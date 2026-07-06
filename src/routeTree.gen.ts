@@ -19,6 +19,7 @@ import { Route as AuthenticatedPapersRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedMtpRouteImport } from './routes/_authenticated/mtp'
 import { Route as AuthenticatedMocksRouteImport } from './routes/_authenticated/mocks'
+import { Route as AuthenticatedMistakesRouteImport } from './routes/_authenticated/mistakes'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedChaptersRouteImport } from './routes/_authenticated/chapters'
 import { Route as AuthenticatedCalendarRouteImport } from './routes/_authenticated/calendar'
@@ -72,6 +73,11 @@ const AuthenticatedMocksRoute = AuthenticatedMocksRouteImport.update({
   path: '/mocks',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedMistakesRoute = AuthenticatedMistakesRouteImport.update({
+  id: '/mistakes',
+  path: '/mistakes',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -95,6 +101,7 @@ export interface FileRoutesByFullPath {
   '/calendar': typeof AuthenticatedCalendarRoute
   '/chapters': typeof AuthenticatedChaptersRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/mistakes': typeof AuthenticatedMistakesRoute
   '/mocks': typeof AuthenticatedMocksRoute
   '/mtp': typeof AuthenticatedMtpRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
@@ -109,6 +116,7 @@ export interface FileRoutesByTo {
   '/calendar': typeof AuthenticatedCalendarRoute
   '/chapters': typeof AuthenticatedChaptersRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/mistakes': typeof AuthenticatedMistakesRoute
   '/mocks': typeof AuthenticatedMocksRoute
   '/mtp': typeof AuthenticatedMtpRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
@@ -125,6 +133,7 @@ export interface FileRoutesById {
   '/_authenticated/calendar': typeof AuthenticatedCalendarRoute
   '/_authenticated/chapters': typeof AuthenticatedChaptersRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/mistakes': typeof AuthenticatedMistakesRoute
   '/_authenticated/mocks': typeof AuthenticatedMocksRoute
   '/_authenticated/mtp': typeof AuthenticatedMtpRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
@@ -141,6 +150,7 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/chapters'
     | '/dashboard'
+    | '/mistakes'
     | '/mocks'
     | '/mtp'
     | '/onboarding'
@@ -155,6 +165,7 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/chapters'
     | '/dashboard'
+    | '/mistakes'
     | '/mocks'
     | '/mtp'
     | '/onboarding'
@@ -170,6 +181,7 @@ export interface FileRouteTypes {
     | '/_authenticated/calendar'
     | '/_authenticated/chapters'
     | '/_authenticated/dashboard'
+    | '/_authenticated/mistakes'
     | '/_authenticated/mocks'
     | '/_authenticated/mtp'
     | '/_authenticated/onboarding'
@@ -257,6 +269,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMocksRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/mistakes': {
+      id: '/_authenticated/mistakes'
+      path: '/mistakes'
+      fullPath: '/mistakes'
+      preLoaderRoute: typeof AuthenticatedMistakesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -285,6 +304,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedCalendarRoute: typeof AuthenticatedCalendarRoute
   AuthenticatedChaptersRoute: typeof AuthenticatedChaptersRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedMistakesRoute: typeof AuthenticatedMistakesRoute
   AuthenticatedMocksRoute: typeof AuthenticatedMocksRoute
   AuthenticatedMtpRoute: typeof AuthenticatedMtpRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
@@ -297,6 +317,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCalendarRoute: AuthenticatedCalendarRoute,
   AuthenticatedChaptersRoute: AuthenticatedChaptersRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedMistakesRoute: AuthenticatedMistakesRoute,
   AuthenticatedMocksRoute: AuthenticatedMocksRoute,
   AuthenticatedMtpRoute: AuthenticatedMtpRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
