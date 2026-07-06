@@ -15,6 +15,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRtpPyqRouteImport } from './routes/_authenticated/rtp-pyq'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
+import { Route as AuthenticatedPlannerRouteImport } from './routes/_authenticated/planner'
 import { Route as AuthenticatedPapersRouteImport } from './routes/_authenticated/papers'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedMtpRouteImport } from './routes/_authenticated/mtp'
@@ -52,6 +53,11 @@ const AuthenticatedRtpPyqRoute = AuthenticatedRtpPyqRouteImport.update({
 const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPlannerRoute = AuthenticatedPlannerRouteImport.update({
+  id: '/planner',
+  path: '/planner',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedPapersRoute = AuthenticatedPapersRouteImport.update({
@@ -113,6 +119,7 @@ export interface FileRoutesByFullPath {
   '/mtp': typeof AuthenticatedMtpRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/papers': typeof AuthenticatedPapersRoute
+  '/planner': typeof AuthenticatedPlannerRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/rtp-pyq': typeof AuthenticatedRtpPyqRoute
 }
@@ -129,6 +136,7 @@ export interface FileRoutesByTo {
   '/mtp': typeof AuthenticatedMtpRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/papers': typeof AuthenticatedPapersRoute
+  '/planner': typeof AuthenticatedPlannerRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/rtp-pyq': typeof AuthenticatedRtpPyqRoute
 }
@@ -147,6 +155,7 @@ export interface FileRoutesById {
   '/_authenticated/mtp': typeof AuthenticatedMtpRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/papers': typeof AuthenticatedPapersRoute
+  '/_authenticated/planner': typeof AuthenticatedPlannerRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/rtp-pyq': typeof AuthenticatedRtpPyqRoute
 }
@@ -165,6 +174,7 @@ export interface FileRouteTypes {
     | '/mtp'
     | '/onboarding'
     | '/papers'
+    | '/planner'
     | '/profile'
     | '/rtp-pyq'
   fileRoutesByTo: FileRoutesByTo
@@ -181,6 +191,7 @@ export interface FileRouteTypes {
     | '/mtp'
     | '/onboarding'
     | '/papers'
+    | '/planner'
     | '/profile'
     | '/rtp-pyq'
   id:
@@ -198,6 +209,7 @@ export interface FileRouteTypes {
     | '/_authenticated/mtp'
     | '/_authenticated/onboarding'
     | '/_authenticated/papers'
+    | '/_authenticated/planner'
     | '/_authenticated/profile'
     | '/_authenticated/rtp-pyq'
   fileRoutesById: FileRoutesById
@@ -251,6 +263,13 @@ declare module '@tanstack/react-router' {
       path: '/profile'
       fullPath: '/profile'
       preLoaderRoute: typeof AuthenticatedProfileRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/planner': {
+      id: '/_authenticated/planner'
+      path: '/planner'
+      fullPath: '/planner'
+      preLoaderRoute: typeof AuthenticatedPlannerRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/papers': {
@@ -329,6 +348,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedMtpRoute: typeof AuthenticatedMtpRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedPapersRoute: typeof AuthenticatedPapersRoute
+  AuthenticatedPlannerRoute: typeof AuthenticatedPlannerRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedRtpPyqRoute: typeof AuthenticatedRtpPyqRoute
 }
@@ -343,6 +363,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedMtpRoute: AuthenticatedMtpRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedPapersRoute: AuthenticatedPapersRoute,
+  AuthenticatedPlannerRoute: AuthenticatedPlannerRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedRtpPyqRoute: AuthenticatedRtpPyqRoute,
 }
