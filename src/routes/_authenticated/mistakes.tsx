@@ -97,7 +97,7 @@ function MistakesPage() {
   });
 
   const updateStatus = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+    mutationFn: async ({ id, status }: { id: string; status: Tables<"mistakes">["status"] }) => {
       const nextDate =
         status === "reviewing"
           ? addDays(new Date(), 3).toISOString().slice(0, 10)
