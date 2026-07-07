@@ -218,7 +218,7 @@ function MistakesPage() {
                 <div className="flex flex-col items-end gap-2">
                   <Select
                     value={m.status}
-                    onValueChange={(v) => updateStatus.mutate({ id: m.id, status: v })}
+                    onValueChange={(v) => updateStatus.mutate({ id: m.id, status: v as Tables<"mistakes">["status"] })}
                   >
                     <SelectTrigger className="w-32">
                       <SelectValue />
