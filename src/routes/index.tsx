@@ -264,9 +264,9 @@ function Landing() {
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-6 py-8 text-sm text-muted-foreground md:flex-row">
           <div className="flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-gold" />
-            <span>CA Unity Network · Built for CA Intermediate</span>
+            <span>CA Unity Network by Ronil Dodhia</span>
           </div>
-          <div>© {new Date().getFullYear()} CA Unity Network. All rights reserved.</div>
+          <div>© {new Date().getFullYear()} CA Unity Network by Ronil Dodhia. All rights reserved.</div>
         </div>
       </footer>
     </div>
