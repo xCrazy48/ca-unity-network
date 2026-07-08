@@ -85,18 +85,73 @@ export const getDailyBrief = createServerFn({ method: "POST" })
     return { brief: text, generatedAt: new Date().toISOString() };
   });
 
+const WeeklyPlanSchema = z.object({
+  tasks: z
+    .array(
+      z.object({
+        title: z.string(),
+        description: z.string(),
+        paper_code: z.string().nullable(),
+        day_offset: z.number().int().min(0).max(6),
+        duration_minutes: z.number().int().min(15).max(300),
+        priority: z.enum(["low", "medium", "high", "critical"]),
+      }),
+    )
+    .max(14),
+});
+
 export const getWeeklyReview = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const ctx = await gatherContext(context.supabase, context.userId);
     const model = getGateway();
+    const contextStr = buildContextString(ctx);
+    const validPaperCodes = ctx.papers.map((p: any) => p.code);
+
     const { text } = await generateText({
       model,
       system:
         "You are CA Unity Network, an elite CA Intermediate exam coach. Deliver a candid weekly review. Cite specific chapters/papers only from the provided context. Max 300 words.",
-      prompt: `Weekly review for this student. Sections:\n- What worked\n- What slipped\n- Diagnosed weak chapters (from mocks + confidence)\n- Recommended focus for next 7 days (paper-by-paper)\n- One habit to fix.\n\n${buildContextString(ctx)}`,
+      prompt: `Weekly review for this student. Sections:\n- What worked\n- What slipped\n- Diagnosed weak chapters (from mocks + confidence)\n- Recommended focus for next 7 days (paper-by-paper)\n- One habit to fix.\n\n${contextStr}`,
     });
-    return { review: text, generatedAt: new Date().toISOString() };
+
+    let tasksCreated = 0;
+    try {
+      const { object } = await generateObject({
+        model,
+        schema: WeeklyPlanSchema,
+        system:
+          "You generate the CA Intermediate student's priority tasks for the next 7 days. Use paper_code values ONLY from the provided list. day_offset is days from today (0 = today, 6 = 6 days from now). Cover the weakest papers first. Balance concept revision, practice, and mock/RTP/MTP/PYQ work. 8-12 tasks total.",
+        prompt: `Valid paper codes: ${validPaperCodes.join(", ")}.\n\n${contextStr}`,
+      });
+
+      const today = new Date();
+      const rows = object.tasks
+        .filter((t) => !t.paper_code || validPaperCodes.includes(t.paper_code))
+        .map((t) => {
+          const d = new Date(today);
+          d.setDate(d.getDate() + t.day_offset);
+          return {
+            user_id: context.userId,
+            title: t.title,
+            description: t.description,
+            paper_code: t.paper_code,
+            scheduled_date: d.toISOString().slice(0, 10),
+            duration_minutes: t.duration_minutes,
+            priority: t.priority,
+            ai_generated: true,
+          };
+        });
+
+      if (rows.length > 0) {
+        const { error } = await context.supabase.from("tasks").insert(rows);
+        if (!error) tasksCreated = rows.length;
+      }
+    } catch (err) {
+      console.error("weekly plan generation failed", err);
+    }
+
+    return { review: text, tasksCreated, generatedAt: new Date().toISOString() };
   });
 
 const RevisionPlanInput = z.object({
