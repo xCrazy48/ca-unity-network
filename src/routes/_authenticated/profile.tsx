@@ -5,7 +5,7 @@ import { AppShell } from "@/components/app-shell";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/profile")({
-  head: () => ({ meta: [{ title: "Profile · PrepOS" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: "Profile · CA Unity Network" }, { name: "robots", content: "noindex" }] }),
   component: Profile,
 });
 

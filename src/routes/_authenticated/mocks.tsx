@@ -41,7 +41,7 @@ import type { Tables } from "@/integrations/supabase/types";
 export const Route = createFileRoute("/_authenticated/mocks")({
   head: () => ({
     meta: [
-      { title: "Mock Tests · PrepOS" },
+      { title: "Mock Tests · CA Unity Network" },
       { name: "robots", content: "noindex" },
     ],
   }),

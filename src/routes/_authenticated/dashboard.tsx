@@ -18,7 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
-      { title: "Dashboard · PrepOS" },
+      { title: "Dashboard · CA Unity Network" },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -112,7 +112,7 @@ function Dashboard() {
           <div>
             <div className="text-xs uppercase tracking-wider text-gold">Finish setup</div>
             <div className="mt-1 font-display text-lg font-semibold">
-              Tell PrepOS about your attempt in 3 minutes.
+              Tell CA Unity Network about your attempt in 3 minutes.
             </div>
           </div>
           <ArrowRight className="h-5 w-5 text-gold" />

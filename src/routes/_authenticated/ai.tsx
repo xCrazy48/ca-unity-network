@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { Brain, Loader2, Sparkles, Target, Zap } from "lucide-react";
@@ -26,7 +26,7 @@ import {
 export const Route = createFileRoute("/_authenticated/ai")({
   head: () => ({
     meta: [
-      { title: "AI Engine · PrepOS" },
+      { title: "AI Engine · CA Unity Network" },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -54,9 +54,23 @@ function AIPage() {
     onSuccess: (r: any) => setOutput({ title: "Today's brief", text: r.brief }),
     onError: (e: Error) => toast.error(e.message),
   });
+  const qc = useQueryClient();
   const review = useMutation({
     mutationFn: async () => reviewFn({ data: {} as never }),
-    onSuccess: (r: any) => setOutput({ title: "Weekly review", text: r.review }),
+    onSuccess: (r: any) => {
+      setOutput({
+        title: `Weekly review${r.tasksCreated ? ` · ${r.tasksCreated} tasks added` : ""}`,
+        text:
+          r.review +
+          (r.tasksCreated
+            ? `\n\n— ${r.tasksCreated} priority tasks added to your Planner for the coming 7 days.`
+            : ""),
+      });
+      if (r.tasksCreated) {
+        qc.invalidateQueries({ queryKey: ["tasks"] });
+        toast.success(`${r.tasksCreated} priorities added to your Planner`);
+      }
+    },
     onError: (e: Error) => toast.error(e.message),
   });
   const plan = useMutation({
@@ -98,7 +112,7 @@ function AIPage() {
         <ActionCard
           icon={Brain}
           title="Weekly Review"
-          body="What worked, what slipped, next 7 days."
+          body="Reviews your week and writes next week's priorities into your Planner."
           onClick={() => review.mutate()}
           pending={review.isPending}
           disabled={anyPending}

@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/reset-password")({
   head: () => ({
     meta: [
-      { title: "Reset password · PrepOS" },
+      { title: "Reset password · CA Unity Network" },
       { name: "robots", content: "noindex" },
     ],
   }),

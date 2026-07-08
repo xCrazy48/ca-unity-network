@@ -18,7 +18,7 @@ import {
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "PrepOS — Your AI Command Center for CA Intermediate" },
+      { title: "CA Unity Network — Your AI Command Center for CA Intermediate" },
       {
         name: "description",
         content:
@@ -35,7 +35,7 @@ const features = [
   { icon: Target, title: "ICAI-Aware Progress", body: "Every chapter tagged with official ICAI weightage — so the plan chases marks, not busywork." },
   { icon: FileText, title: "MTP, RTP & PYQ Tracker", body: "Chapter × subject checklist covering May 2024 → May 2026 sessions. Nothing slips through." },
   { icon: BookOpenCheck, title: "Mistake Book", body: "Every error linked to source, chapter, concept — with a spaced-repetition schedule until it's gone." },
-  { icon: Flame, title: "Rescue Mode", body: "When time is short, PrepOS collapses your plan to only the highest-yield topics per paper." },
+  { icon: Flame, title: "Rescue Mode", body: "When time is short, CA Unity Network collapses your plan to only the highest-yield topics per paper." },
 ];
 
 const modules = [
@@ -50,7 +50,7 @@ const testimonials = [
 ];
 
 const faqs = [
-  { q: "How is this different from Notion or a planner app?", a: "PrepOS is built around the ICAI syllabus, weightage, and paper structure. It doesn't just store tasks — it decides them for you based on your mock scores, mistakes, and time left." },
+  { q: "How is this different from Notion or a planner app?", a: "CA Unity Network is built around the ICAI syllabus, weightage, and paper structure. It doesn't just store tasks — it decides them for you based on your mock scores, mistakes, and time left." },
   { q: "Which sessions does it cover?", a: "May 2024, September 2024, January 2025, May 2025, September 2025, January 2026, and May 2026 — for RTPs, MTPs, and PYQs." },
   { q: "Can I use it for just one group?", a: "Yes. Choose Group 1, Group 2, or Both during setup. Exam dates are fully editable for the 3-day or 6-day schedule." },
   { q: "Is my data private?", a: "Yes. Every record is row-level-secured to your account. Nobody else — not even other students — can see your data." },
@@ -66,7 +66,7 @@ function Landing() {
             <div className="grid h-8 w-8 place-items-center rounded-lg bg-gold text-primary-foreground shadow-glow">
               <Sparkles className="h-4 w-4" strokeWidth={2.5} />
             </div>
-            <span className="font-display text-xl font-semibold tracking-tight">PrepOS</span>
+            <span className="font-display text-xl font-semibold tracking-tight">CA Unity Network</span>
           </Link>
           <nav className="hidden items-center gap-8 md:flex">
             <a href="#features" className="text-sm text-muted-foreground hover:text-foreground">Features</a>
@@ -104,7 +104,7 @@ function Landing() {
               The AI <span className="text-gold">command center</span> for your CA Inter attempt.
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
-              Stop guessing what to study. PrepOS turns the ICAI syllabus, your mocks, and the
+              Stop guessing what to study. CA Unity Network turns the ICAI syllabus, your mocks, and the
               days left into one thing — the exact next task that maximizes your marks.
             </p>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
@@ -248,14 +248,14 @@ function Landing() {
             Your next attempt starts with your <span className="text-gold">next task</span>.
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-muted-foreground">
-            Set up your exam calendar in under 3 minutes. PrepOS handles the rest.
+            Set up your exam calendar in under 3 minutes. CA Unity Network handles the rest.
           </p>
           <Link
             to="/auth"
             search={{ mode: "signup" }}
             className="mt-8 inline-flex items-center gap-2 rounded-lg bg-gold px-6 py-3 text-sm font-medium text-primary-foreground shadow-glow transition hover:opacity-90"
           >
-            Create your PrepOS <ArrowRight className="h-4 w-4" />
+            Create your CA Unity Network <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
       </section>
@@ -264,9 +264,9 @@ function Landing() {
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-6 py-8 text-sm text-muted-foreground md:flex-row">
           <div className="flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-gold" />
-            <span>PrepOS · Built for CA Intermediate</span>
+            <span>CA Unity Network by Ronil Dodhia</span>
           </div>
-          <div>© {new Date().getFullYear()} PrepOS. All rights reserved.</div>
+          <div>© {new Date().getFullYear()} CA Unity Network by Ronil Dodhia. All rights reserved.</div>
         </div>
       </footer>
     </div>

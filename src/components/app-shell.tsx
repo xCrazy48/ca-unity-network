@@ -61,7 +61,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="grid h-8 w-8 place-items-center rounded-lg bg-gold text-primary-foreground shadow-glow">
             <Sparkles className="h-4 w-4" strokeWidth={2.5} />
           </div>
-          <span className="font-display text-lg font-semibold">PrepOS</span>
+          <span className="font-display text-lg font-semibold">CA Unity Network</span>
         </div>
         <nav className="flex-1 space-y-0.5 overflow-y-auto p-3">
           {nav.map((item) => {
@@ -109,7 +109,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="grid h-7 w-7 place-items-center rounded-lg bg-gold text-primary-foreground">
             <Sparkles className="h-3.5 w-3.5" />
           </div>
-          <span className="font-display text-base font-semibold">PrepOS</span>
+          <span className="font-display text-base font-semibold">CA Unity Network</span>
         </Link>
         <button onClick={signOut} className="text-sm text-muted-foreground">Sign out</button>
       </div>

@@ -31,7 +31,7 @@ import type { Tables } from "@/integrations/supabase/types";
 
 export const Route = createFileRoute("/_authenticated/mtp")({
   head: () => ({
-    meta: [{ title: "MTP · PrepOS" }, { name: "robots", content: "noindex" }],
+    meta: [{ title: "MTP · CA Unity Network" }, { name: "robots", content: "noindex" }],
   }),
   component: MtpPage,
 });

@@ -74,15 +74,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "PrepOS — The AI Exam OS for CA Intermediate" },
+      { title: "CA Unity Network — The AI Exam OS for CA Intermediate" },
       {
         name: "description",
         content:
-          "PrepOS is the AI-powered command center for CA Inter aspirants. Track chapters, mocks, MTPs, RTPs & PYQs, and let AI plan every day up to your exam.",
+          "CA Unity Network is the AI-powered command center for CA Inter aspirants. Track chapters, mocks, MTPs, RTPs & PYQs, and let AI plan every day up to your exam.",
       },
-      { name: "author", content: "PrepOS" },
+      { name: "author", content: "Ronil Dodhia" },
       { name: "theme-color", content: "#151820" },
-      { property: "og:title", content: "PrepOS — The AI Exam OS for CA Intermediate" },
+      { property: "og:title", content: "CA Unity Network — The AI Exam OS for CA Intermediate" },
       {
         property: "og:description",
         content:
