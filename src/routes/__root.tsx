@@ -80,7 +80,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content:
           "CA Unity Network is the AI-powered command center for CA Inter aspirants. Track chapters, mocks, MTPs, RTPs & PYQs, and let AI plan every day up to your exam.",
       },
-      { name: "author", content: "CA Unity Network" },
+      { name: "author", content: "Ronil Dodhia" },
       { name: "theme-color", content: "#151820" },
       { property: "og:title", content: "CA Unity Network — The AI Exam OS for CA Intermediate" },
       {
