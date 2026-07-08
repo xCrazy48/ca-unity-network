@@ -16,8 +16,8 @@ export const Route = createFileRoute("/auth")({
   validateSearch: searchSchema,
   head: () => ({
     meta: [
-      { title: "Sign in · PrepOS" },
-      { name: "description", content: "Sign in to your PrepOS command center for CA Intermediate." },
+      { title: "Sign in · CA Unity Network" },
+      { name: "description", content: "Sign in to your CA Unity Network command center for CA Intermediate." },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -91,7 +91,7 @@ function AuthPage() {
             <div className="grid h-8 w-8 place-items-center rounded-lg bg-gold text-primary-foreground shadow-glow">
               <Sparkles className="h-4 w-4" strokeWidth={2.5} />
             </div>
-            <span className="font-display text-xl font-semibold">PrepOS</span>
+            <span className="font-display text-xl font-semibold">CA Unity Network</span>
           </Link>
           <div>
             <h2 className="font-display text-4xl font-semibold leading-tight">
@@ -103,7 +103,7 @@ function AuthPage() {
             </p>
           </div>
           <div className="text-xs text-muted-foreground">
-            © {new Date().getFullYear()} PrepOS · Built for CA Intermediate
+            © {new Date().getFullYear()} CA Unity Network · Built for CA Intermediate
           </div>
         </div>
       </div>
@@ -116,12 +116,12 @@ function AuthPage() {
               <div className="grid h-8 w-8 place-items-center rounded-lg bg-gold text-primary-foreground">
                 <Sparkles className="h-4 w-4" strokeWidth={2.5} />
               </div>
-              <span className="font-display text-xl font-semibold">PrepOS</span>
+              <span className="font-display text-xl font-semibold">CA Unity Network</span>
             </Link>
           </div>
 
           <h1 className="font-display text-3xl font-semibold">
-            {mode === "signup" ? "Create your PrepOS" : "Welcome back"}
+            {mode === "signup" ? "Create your CA Unity Network" : "Welcome back"}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {mode === "signup"

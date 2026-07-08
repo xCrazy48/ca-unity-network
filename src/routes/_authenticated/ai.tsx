@@ -26,7 +26,7 @@ import {
 export const Route = createFileRoute("/_authenticated/ai")({
   head: () => ({
     meta: [
-      { title: "AI Engine · PrepOS" },
+      { title: "AI Engine · CA Unity Network" },
       { name: "robots", content: "noindex" },
     ],
   }),

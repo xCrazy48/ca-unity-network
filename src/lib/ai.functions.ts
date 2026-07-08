@@ -79,7 +79,7 @@ export const getDailyBrief = createServerFn({ method: "POST" })
     const { text } = await generateText({
       model,
       system:
-        "You are PrepOS, an elite CA Intermediate exam coach. Be direct, specific, and actionable. Reference ICAI Study Material, RTPs, MTPs, and PYQs by name when relevant. Never invent chapter names — only use ones in the context. Use short paragraphs and bullet lists. Max 220 words.",
+        "You are CA Unity Network, an elite CA Intermediate exam coach. Be direct, specific, and actionable. Reference ICAI Study Material, RTPs, MTPs, and PYQs by name when relevant. Never invent chapter names — only use ones in the context. Use short paragraphs and bullet lists. Max 220 words.",
       prompt: `Write today's morning brief for this student. Structure:\n1) One-line status\n2) Top 3 priorities today (with paper codes)\n3) One risk to watch\n4) A short motivational close.\n\n${buildContextString(ctx)}`,
     });
     return { brief: text, generatedAt: new Date().toISOString() };
@@ -93,7 +93,7 @@ export const getWeeklyReview = createServerFn({ method: "POST" })
     const { text } = await generateText({
       model,
       system:
-        "You are PrepOS, an elite CA Intermediate exam coach. Deliver a candid weekly review. Cite specific chapters/papers only from the provided context. Max 300 words.",
+        "You are CA Unity Network, an elite CA Intermediate exam coach. Deliver a candid weekly review. Cite specific chapters/papers only from the provided context. Max 300 words.",
       prompt: `Weekly review for this student. Sections:\n- What worked\n- What slipped\n- Diagnosed weak chapters (from mocks + confidence)\n- Recommended focus for next 7 days (paper-by-paper)\n- One habit to fix.\n\n${buildContextString(ctx)}`,
     });
     return { review: text, generatedAt: new Date().toISOString() };
@@ -125,7 +125,7 @@ export const generateRevisionPlan = createServerFn({ method: "POST" })
     const { text } = await generateText({
       model,
       system:
-        "You are PrepOS, an elite CA Intermediate coach. Build precise, day-by-day revision plans citing ICAI Study Material, RTPs, MTPs, and PYQs. Never invent chapter names.",
+        "You are CA Unity Network, an elite CA Intermediate coach. Build precise, day-by-day revision plans citing ICAI Study Material, RTPs, MTPs, and PYQs. Never invent chapter names.",
       prompt: `Build a ${data.windowDays}-day revision plan for ${paper?.name ?? data.paperCode} (${mode}).\nDaily study hours available: ${ctx.profile?.daily_study_hours ?? 8}.\n\nChapters:\n${chapterLines}\n\nOutput format — for each day:\n**Day N**\n- Morning: <topics + ICAI resource>\n- Afternoon: <topics + practice>\n- Evening: <RTP/MTP/PYQ + revision>\nEnd with a 3-line "final checklist".`,
     });
     return { plan: text, paperCode: data.paperCode, windowDays: data.windowDays };
@@ -150,7 +150,7 @@ export const diagnoseWeakChapters = createServerFn({ method: "POST" })
     const { text } = await generateText({
       model,
       system:
-        "You are PrepOS. Diagnose weak chapters from mock scores + confidence + open mistakes. Output ONLY chapters that appear in the provided context. Be concise.",
+        "You are CA Unity Network. Diagnose weak chapters from mock scores + confidence + open mistakes. Output ONLY chapters that appear in the provided context. Be concise.",
       prompt: `Diagnose weak chapters${data.paperCode ? ` for ${data.paperCode}` : ""}. For each weak chapter output:\n- Chapter · Paper\n- Why it's weak (1 line, cite evidence)\n- Fix action (1 line, cite ICAI resource)\n\n${buildContextString(scoped)}`,
     });
     return { diagnosis: text };

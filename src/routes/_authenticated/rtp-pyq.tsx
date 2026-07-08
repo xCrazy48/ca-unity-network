@@ -15,7 +15,7 @@ import type { Tables } from "@/integrations/supabase/types";
 export const Route = createFileRoute("/_authenticated/rtp-pyq")({
   head: () => ({
     meta: [
-      { title: "RTP & PYQ · PrepOS" },
+      { title: "RTP & PYQ · CA Unity Network" },
       { name: "robots", content: "noindex" },
     ],
   }),

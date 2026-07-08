@@ -9,7 +9,7 @@ import { AppShell } from "@/components/app-shell";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/calendar")({
-  head: () => ({ meta: [{ title: "Exam Calendar · PrepOS" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: "Exam Calendar · CA Unity Network" }, { name: "robots", content: "noindex" }] }),
   component: CalendarPage,
 });
 

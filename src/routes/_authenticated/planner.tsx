@@ -33,7 +33,7 @@ import type { Tables } from "@/integrations/supabase/types";
 export const Route = createFileRoute("/_authenticated/planner")({
   head: () => ({
     meta: [
-      { title: "Planner · PrepOS" },
+      { title: "Planner · CA Unity Network" },
       { name: "robots", content: "noindex" },
     ],
   }),

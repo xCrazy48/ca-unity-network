@@ -12,7 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/_authenticated/papers")({
   head: () => ({
     meta: [
-      { title: "Papers · PrepOS" },
+      { title: "Papers · CA Unity Network" },
       { name: "robots", content: "noindex" },
     ],
   }),
