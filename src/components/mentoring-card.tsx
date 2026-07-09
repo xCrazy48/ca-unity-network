@@ -2,7 +2,7 @@ import { MessageCircle } from "lucide-react";
 
 const WHATSAPP_NUMBER = "918828828184";
 const WHATSAPP_LINK = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
-  "Hi Ronil, I'd like personal mentoring for my CA Inter prep via CA Unity Network.",
+  "Hi Team Unity, I'd like personal mentoring for my CA prep via CA Unity Network.",
 )}`;
 
 export function MentoringCard({ variant = "default" }: { variant?: "default" | "compact" }) {
@@ -28,7 +28,7 @@ export function MentoringCard({ variant = "default" }: { variant?: "default" | "
         Need a human in your corner?
       </h3>
       <p className="mt-2 text-sm text-muted-foreground">
-        Get 1:1 mentoring from Ronil Dodhia — strategy, doubt-solving, and honest
+        Get 1:1 mentoring from Team Unity — strategy, doubt-solving, and honest
         feedback on your prep. Message on WhatsApp to book a slot.
       </p>
       <a
@@ -38,7 +38,7 @@ export function MentoringCard({ variant = "default" }: { variant?: "default" | "
         className="mt-5 inline-flex items-center gap-2 rounded-lg bg-gold px-4 py-2 text-sm font-medium text-primary-foreground shadow-elegant transition hover:opacity-90"
       >
         <MessageCircle className="h-4 w-4" />
-        Chat on WhatsApp · +91 88288 28184
+        WhatsApp · 8828828184
       </a>
     </section>
   );
