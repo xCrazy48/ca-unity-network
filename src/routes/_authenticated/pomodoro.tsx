@@ -78,6 +78,7 @@ function beep() {
 
 function PomodoroPage() {
   const qc = useQueryClient();
+  const logSession = useServerFn(logFocusSession);
   const [settings, setSettings] = useState<Settings>(DEFAULTS);
   const [phase, setPhase] = useState<Phase>("focus");
   const [secondsLeft, setSecondsLeft] = useState(DEFAULTS.focus * 60);
