@@ -164,3 +164,76 @@ export const activateStudyPlan = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+const SyncInput = z.object({
+  plan_id: z.string().uuid(),
+  days: z.number().int().min(1).max(30).default(7),
+  start_date: z.string().optional(),
+});
+
+type TimetableBlock = {
+  start: string;
+  end: string;
+  subject: string;
+  activity: string;
+  focus_area: string | null;
+};
+
+function minutesBetween(start: string, end: string) {
+  const [sh, sm] = start.split(":").map(Number);
+  const [eh, em] = end.split(":").map(Number);
+  if ([sh, sm, eh, em].some((n) => Number.isNaN(n))) return null;
+  return Math.max(0, eh * 60 + em - (sh * 60 + sm));
+}
+
+export const syncPlanToTasks = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((v: unknown) => SyncInput.parse(v))
+  .handler(async ({ context, data }) => {
+    const { data: plan, error: pErr } = await context.supabase
+      .from("study_plans")
+      .select("*")
+      .eq("id", data.plan_id)
+      .maybeSingle();
+    if (pErr) throw new Error(pErr.message);
+    if (!plan) throw new Error("Plan not found");
+
+    const blocks = ((plan.daily_timetable as unknown) as TimetableBlock[]) ?? [];
+    if (blocks.length === 0) throw new Error("This plan has no daily timetable to sync.");
+
+    const start = data.start_date ? new Date(data.start_date) : new Date();
+    start.setHours(0, 0, 0, 0);
+
+    const rows: Array<{
+      user_id: string;
+      title: string;
+      description: string;
+      scheduled_date: string;
+      duration_minutes: number | null;
+      priority: "medium";
+      ai_generated: true;
+      sort_order: number;
+    }> = [];
+
+    for (let d = 0; d < data.days; d++) {
+      const day = new Date(start.getTime() + d * 86400000);
+      const iso = day.toISOString().slice(0, 10);
+      blocks.forEach((b, i) => {
+        rows.push({
+          user_id: context.userId,
+          title: `${b.start}–${b.end} · ${b.subject}`,
+          description: [b.activity, b.focus_area].filter(Boolean).join(" — "),
+          scheduled_date: iso,
+          duration_minutes: minutesBetween(b.start, b.end),
+          priority: "medium",
+          ai_generated: true,
+          sort_order: i,
+        });
+      });
+    }
+
+    const { error } = await context.supabase.from("tasks").insert(rows);
+    if (error) throw new Error(error.message);
+    return { inserted: rows.length, days: data.days };
+  });
+

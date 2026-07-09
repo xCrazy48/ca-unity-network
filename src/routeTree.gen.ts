@@ -29,7 +29,6 @@ import { Route as AuthenticatedPapersRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedMtpRouteImport } from './routes/_authenticated/mtp'
 import { Route as AuthenticatedMocksRouteImport } from './routes/_authenticated/mocks'
-import { Route as AuthenticatedMockAnalyzerRouteImport } from './routes/_authenticated/mock-analyzer'
 import { Route as AuthenticatedMistakesRouteImport } from './routes/_authenticated/mistakes'
 import { Route as AuthenticatedMentoringRouteImport } from './routes/_authenticated/mentoring'
 import { Route as AuthenticatedFormulasRouteImport } from './routes/_authenticated/formulas'
@@ -139,12 +138,6 @@ const AuthenticatedMocksRoute = AuthenticatedMocksRouteImport.update({
   path: '/mocks',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedMockAnalyzerRoute =
-  AuthenticatedMockAnalyzerRouteImport.update({
-    id: '/mock-analyzer',
-    path: '/mock-analyzer',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
 const AuthenticatedMistakesRoute = AuthenticatedMistakesRouteImport.update({
   id: '/mistakes',
   path: '/mistakes',
@@ -202,7 +195,6 @@ export interface FileRoutesByFullPath {
   '/formulas': typeof AuthenticatedFormulasRoute
   '/mentoring': typeof AuthenticatedMentoringRoute
   '/mistakes': typeof AuthenticatedMistakesRoute
-  '/mock-analyzer': typeof AuthenticatedMockAnalyzerRoute
   '/mocks': typeof AuthenticatedMocksRoute
   '/mtp': typeof AuthenticatedMtpRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
@@ -232,7 +224,6 @@ export interface FileRoutesByTo {
   '/formulas': typeof AuthenticatedFormulasRoute
   '/mentoring': typeof AuthenticatedMentoringRoute
   '/mistakes': typeof AuthenticatedMistakesRoute
-  '/mock-analyzer': typeof AuthenticatedMockAnalyzerRoute
   '/mocks': typeof AuthenticatedMocksRoute
   '/mtp': typeof AuthenticatedMtpRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
@@ -264,7 +255,6 @@ export interface FileRoutesById {
   '/_authenticated/formulas': typeof AuthenticatedFormulasRoute
   '/_authenticated/mentoring': typeof AuthenticatedMentoringRoute
   '/_authenticated/mistakes': typeof AuthenticatedMistakesRoute
-  '/_authenticated/mock-analyzer': typeof AuthenticatedMockAnalyzerRoute
   '/_authenticated/mocks': typeof AuthenticatedMocksRoute
   '/_authenticated/mtp': typeof AuthenticatedMtpRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
@@ -296,7 +286,6 @@ export interface FileRouteTypes {
     | '/formulas'
     | '/mentoring'
     | '/mistakes'
-    | '/mock-analyzer'
     | '/mocks'
     | '/mtp'
     | '/onboarding'
@@ -326,7 +315,6 @@ export interface FileRouteTypes {
     | '/formulas'
     | '/mentoring'
     | '/mistakes'
-    | '/mock-analyzer'
     | '/mocks'
     | '/mtp'
     | '/onboarding'
@@ -357,7 +345,6 @@ export interface FileRouteTypes {
     | '/_authenticated/formulas'
     | '/_authenticated/mentoring'
     | '/_authenticated/mistakes'
-    | '/_authenticated/mock-analyzer'
     | '/_authenticated/mocks'
     | '/_authenticated/mtp'
     | '/_authenticated/onboarding'
@@ -525,13 +512,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMocksRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/mock-analyzer': {
-      id: '/_authenticated/mock-analyzer'
-      path: '/mock-analyzer'
-      fullPath: '/mock-analyzer'
-      preLoaderRoute: typeof AuthenticatedMockAnalyzerRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/mistakes': {
       id: '/_authenticated/mistakes'
       path: '/mistakes'
@@ -600,7 +580,6 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedFormulasRoute: typeof AuthenticatedFormulasRoute
   AuthenticatedMentoringRoute: typeof AuthenticatedMentoringRoute
   AuthenticatedMistakesRoute: typeof AuthenticatedMistakesRoute
-  AuthenticatedMockAnalyzerRoute: typeof AuthenticatedMockAnalyzerRoute
   AuthenticatedMocksRoute: typeof AuthenticatedMocksRoute
   AuthenticatedMtpRoute: typeof AuthenticatedMtpRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
@@ -624,7 +603,6 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedFormulasRoute: AuthenticatedFormulasRoute,
   AuthenticatedMentoringRoute: AuthenticatedMentoringRoute,
   AuthenticatedMistakesRoute: AuthenticatedMistakesRoute,
-  AuthenticatedMockAnalyzerRoute: AuthenticatedMockAnalyzerRoute,
   AuthenticatedMocksRoute: AuthenticatedMocksRoute,
   AuthenticatedMtpRoute: AuthenticatedMtpRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
