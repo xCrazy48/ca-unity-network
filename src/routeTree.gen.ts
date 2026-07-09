@@ -11,7 +11,6 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TeamRouteImport } from './routes/team'
-import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as AuthRouteImport } from './routes/auth'
@@ -37,6 +36,7 @@ import { Route as AuthenticatedChaptersRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedCalendarRouteImport } from './routes/_authenticated/calendar'
 import { Route as AuthenticatedAiRouteImport } from './routes/_authenticated/ai'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as ApiPublicSitemapXmlRouteImport } from './routes/api/public/sitemap.xml'
 
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
@@ -46,11 +46,6 @@ const TermsRoute = TermsRouteImport.update({
 const TeamRoute = TeamRouteImport.update({
   id: '/team',
   path: '/team',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
-  id: '/sitemap.xml',
-  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -177,6 +172,11 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiPublicSitemapXmlRoute = ApiPublicSitemapXmlRouteImport.update({
+  id: '/api/public/sitemap/xml',
+  path: '/api/public/sitemap/xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -184,7 +184,6 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
   '/admin': typeof AuthenticatedAdminRoute
@@ -206,6 +205,7 @@ export interface FileRoutesByFullPath {
   '/reminders': typeof AuthenticatedRemindersRoute
   '/rtp-pyq': typeof AuthenticatedRtpPyqRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/api/public/sitemap/xml': typeof ApiPublicSitemapXmlRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -213,7 +213,6 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
   '/admin': typeof AuthenticatedAdminRoute
@@ -235,6 +234,7 @@ export interface FileRoutesByTo {
   '/reminders': typeof AuthenticatedRemindersRoute
   '/rtp-pyq': typeof AuthenticatedRtpPyqRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/api/public/sitemap/xml': typeof ApiPublicSitemapXmlRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -244,7 +244,6 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
@@ -266,6 +265,7 @@ export interface FileRoutesById {
   '/_authenticated/reminders': typeof AuthenticatedRemindersRoute
   '/_authenticated/rtp-pyq': typeof AuthenticatedRtpPyqRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/api/public/sitemap/xml': typeof ApiPublicSitemapXmlRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -275,7 +275,6 @@ export interface FileRouteTypes {
     | '/auth'
     | '/privacy'
     | '/reset-password'
-    | '/sitemap.xml'
     | '/team'
     | '/terms'
     | '/admin'
@@ -297,6 +296,7 @@ export interface FileRouteTypes {
     | '/reminders'
     | '/rtp-pyq'
     | '/settings'
+    | '/api/public/sitemap/xml'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -304,7 +304,6 @@ export interface FileRouteTypes {
     | '/auth'
     | '/privacy'
     | '/reset-password'
-    | '/sitemap.xml'
     | '/team'
     | '/terms'
     | '/admin'
@@ -326,6 +325,7 @@ export interface FileRouteTypes {
     | '/reminders'
     | '/rtp-pyq'
     | '/settings'
+    | '/api/public/sitemap/xml'
   id:
     | '__root__'
     | '/'
@@ -334,7 +334,6 @@ export interface FileRouteTypes {
     | '/auth'
     | '/privacy'
     | '/reset-password'
-    | '/sitemap.xml'
     | '/team'
     | '/terms'
     | '/_authenticated/admin'
@@ -356,6 +355,7 @@ export interface FileRouteTypes {
     | '/_authenticated/reminders'
     | '/_authenticated/rtp-pyq'
     | '/_authenticated/settings'
+    | '/api/public/sitemap/xml'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -365,9 +365,9 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   PrivacyRoute: typeof PrivacyRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
-  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TeamRoute: typeof TeamRoute
   TermsRoute: typeof TermsRoute
+  ApiPublicSitemapXmlRoute: typeof ApiPublicSitemapXmlRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -384,13 +384,6 @@ declare module '@tanstack/react-router' {
       path: '/team'
       fullPath: '/team'
       preLoaderRoute: typeof TeamRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/sitemap.xml': {
-      id: '/sitemap.xml'
-      path: '/sitemap.xml'
-      fullPath: '/sitemap.xml'
-      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reset-password': {
@@ -568,6 +561,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/sitemap/xml': {
+      id: '/api/public/sitemap/xml'
+      path: '/api/public/sitemap/xml'
+      fullPath: '/api/public/sitemap/xml'
+      preLoaderRoute: typeof ApiPublicSitemapXmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -625,9 +625,9 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   PrivacyRoute: PrivacyRoute,
   ResetPasswordRoute: ResetPasswordRoute,
-  SitemapDotxmlRoute: SitemapDotxmlRoute,
   TeamRoute: TeamRoute,
   TermsRoute: TermsRoute,
+  ApiPublicSitemapXmlRoute: ApiPublicSitemapXmlRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
