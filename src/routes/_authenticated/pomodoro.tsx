@@ -10,6 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
+import { logFocusSession } from "@/lib/pomodoro.functions";
 
 export const Route = createFileRoute("/_authenticated/pomodoro")({
   head: () => ({
