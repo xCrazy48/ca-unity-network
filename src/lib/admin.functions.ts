@@ -24,7 +24,7 @@ export const getAdminStats = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data, error } = await supabaseAdmin.rpc("get_admin_stats" as never);
     if (error) throw new Error(error.message);
-    return (data ?? {}) as Record<string, unknown>;
+    return { stats: (data ?? {}) as Record<string, string | number | boolean | null | Array<Record<string, string | number>>> };
   });
 
 export const logAdminAction = createServerFn({ method: "POST" })
