@@ -1,6 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, Heart, MessageCircle, Users } from "lucide-react";
 import { SiteHeader, SiteFooter } from "./about";
+import ronilAsset from "@/assets/ronil.jpg.asset.json";
+import rushilAsset from "@/assets/rushil.jpg.asset.json";
+
 
 export const Route = createFileRoute("/team")({
   head: () => ({
