@@ -853,6 +853,66 @@ export type Database = {
           },
         ]
       }
+      study_plans: {
+        Row: {
+          created_at: string
+          daily_hours: number
+          daily_timetable: Json
+          exam_date: string
+          exam_name: string
+          id: string
+          is_active: boolean
+          monthly_goals: Json
+          notes: string | null
+          preparation_level: string
+          schedule_preference: string | null
+          strategy: string | null
+          strong_subjects: Json
+          updated_at: string
+          user_id: string
+          weak_subjects: Json
+          weekly_goals: Json
+        }
+        Insert: {
+          created_at?: string
+          daily_hours: number
+          daily_timetable?: Json
+          exam_date: string
+          exam_name: string
+          id?: string
+          is_active?: boolean
+          monthly_goals?: Json
+          notes?: string | null
+          preparation_level: string
+          schedule_preference?: string | null
+          strategy?: string | null
+          strong_subjects?: Json
+          updated_at?: string
+          user_id: string
+          weak_subjects?: Json
+          weekly_goals?: Json
+        }
+        Update: {
+          created_at?: string
+          daily_hours?: number
+          daily_timetable?: Json
+          exam_date?: string
+          exam_name?: string
+          id?: string
+          is_active?: boolean
+          monthly_goals?: Json
+          notes?: string | null
+          preparation_level?: string
+          schedule_preference?: string | null
+          strategy?: string | null
+          strong_subjects?: Json
+          updated_at?: string
+          user_id?: string
+          weak_subjects?: Json
+          weekly_goals?: Json
+        }
+        Relationships: []
+      }
       study_sessions: {
         Row: {
           chapter_id: string | null
