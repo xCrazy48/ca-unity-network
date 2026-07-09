@@ -201,9 +201,11 @@ export function SiteFooter() {
           <Heart className="h-4 w-4 text-gold" />
           <span>CA Unity Network — Developed with love by Team Unity</span>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center justify-center gap-4">
           <Link to="/about" className="hover:text-foreground">About</Link>
           <Link to="/team" className="hover:text-foreground">Team</Link>
+          <Link to="/privacy" className="hover:text-foreground">Privacy</Link>
+          <Link to="/terms" className="hover:text-foreground">Terms</Link>
           <a
             href="https://wa.me/918828828184"
             target="_blank"
