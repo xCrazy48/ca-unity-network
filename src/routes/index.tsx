@@ -254,7 +254,7 @@ function Landing() {
               and honest feedback tailored to your attempt.
             </p>
             <a
-              href={`https://wa.me/918828828184?text=${encodeURIComponent("Hi Team Unity, I'd like personal mentoring for my CA prep via CA Unity Network.")}`}
+              href={"https://wa.me/918828828184"}
               target="_blank"
               rel="noreferrer"
               className="mt-6 inline-flex items-center gap-2 rounded-lg border border-gold/40 bg-background px-5 py-2.5 text-sm font-medium hover:bg-accent"
