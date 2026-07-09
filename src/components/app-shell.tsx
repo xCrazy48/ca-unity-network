@@ -126,7 +126,11 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
           <span className="font-display text-base font-semibold">CA Unity Network</span>
         </Link>
-        <button onClick={signOut} className="text-sm text-muted-foreground">Sign out</button>
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <button onClick={signOut} className="text-sm text-muted-foreground">Sign out</button>
+        </div>
+
       </div>
 
       <main className="md:pl-60">
