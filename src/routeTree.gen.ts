@@ -15,6 +15,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRtpPyqRouteImport } from './routes/_authenticated/rtp-pyq'
+import { Route as AuthenticatedRemindersRouteImport } from './routes/_authenticated/reminders'
 import { Route as AuthenticatedReflectionRouteImport } from './routes/_authenticated/reflection'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedPomodoroRouteImport } from './routes/_authenticated/pomodoro'
@@ -57,6 +58,11 @@ const IndexRoute = IndexRouteImport.update({
 const AuthenticatedRtpPyqRoute = AuthenticatedRtpPyqRouteImport.update({
   id: '/rtp-pyq',
   path: '/rtp-pyq',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedRemindersRoute = AuthenticatedRemindersRouteImport.update({
+  id: '/reminders',
+  path: '/reminders',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedReflectionRoute = AuthenticatedReflectionRouteImport.update({
@@ -149,6 +155,7 @@ export interface FileRoutesByFullPath {
   '/pomodoro': typeof AuthenticatedPomodoroRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/reflection': typeof AuthenticatedReflectionRoute
+  '/reminders': typeof AuthenticatedRemindersRoute
   '/rtp-pyq': typeof AuthenticatedRtpPyqRoute
 }
 export interface FileRoutesByTo {
@@ -170,6 +177,7 @@ export interface FileRoutesByTo {
   '/pomodoro': typeof AuthenticatedPomodoroRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/reflection': typeof AuthenticatedReflectionRoute
+  '/reminders': typeof AuthenticatedRemindersRoute
   '/rtp-pyq': typeof AuthenticatedRtpPyqRoute
 }
 export interface FileRoutesById {
@@ -193,6 +201,7 @@ export interface FileRoutesById {
   '/_authenticated/pomodoro': typeof AuthenticatedPomodoroRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/reflection': typeof AuthenticatedReflectionRoute
+  '/_authenticated/reminders': typeof AuthenticatedRemindersRoute
   '/_authenticated/rtp-pyq': typeof AuthenticatedRtpPyqRoute
 }
 export interface FileRouteTypes {
@@ -216,6 +225,7 @@ export interface FileRouteTypes {
     | '/pomodoro'
     | '/profile'
     | '/reflection'
+    | '/reminders'
     | '/rtp-pyq'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -237,6 +247,7 @@ export interface FileRouteTypes {
     | '/pomodoro'
     | '/profile'
     | '/reflection'
+    | '/reminders'
     | '/rtp-pyq'
   id:
     | '__root__'
@@ -259,6 +270,7 @@ export interface FileRouteTypes {
     | '/_authenticated/pomodoro'
     | '/_authenticated/profile'
     | '/_authenticated/reflection'
+    | '/_authenticated/reminders'
     | '/_authenticated/rtp-pyq'
   fileRoutesById: FileRoutesById
 }
@@ -312,6 +324,13 @@ declare module '@tanstack/react-router' {
       path: '/rtp-pyq'
       fullPath: '/rtp-pyq'
       preLoaderRoute: typeof AuthenticatedRtpPyqRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/reminders': {
+      id: '/_authenticated/reminders'
+      path: '/reminders'
+      fullPath: '/reminders'
+      preLoaderRoute: typeof AuthenticatedRemindersRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/reflection': {
@@ -430,6 +449,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPomodoroRoute: typeof AuthenticatedPomodoroRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedReflectionRoute: typeof AuthenticatedReflectionRoute
+  AuthenticatedRemindersRoute: typeof AuthenticatedRemindersRoute
   AuthenticatedRtpPyqRoute: typeof AuthenticatedRtpPyqRoute
 }
 
@@ -448,6 +468,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPomodoroRoute: AuthenticatedPomodoroRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedReflectionRoute: AuthenticatedReflectionRoute,
+  AuthenticatedRemindersRoute: AuthenticatedRemindersRoute,
   AuthenticatedRtpPyqRoute: AuthenticatedRtpPyqRoute,
 }
 
