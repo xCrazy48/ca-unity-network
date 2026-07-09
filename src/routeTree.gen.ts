@@ -15,6 +15,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRtpPyqRouteImport } from './routes/_authenticated/rtp-pyq'
+import { Route as AuthenticatedReflectionRouteImport } from './routes/_authenticated/reflection'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedPomodoroRouteImport } from './routes/_authenticated/pomodoro'
 import { Route as AuthenticatedPlannerRouteImport } from './routes/_authenticated/planner'
@@ -56,6 +57,11 @@ const IndexRoute = IndexRouteImport.update({
 const AuthenticatedRtpPyqRoute = AuthenticatedRtpPyqRouteImport.update({
   id: '/rtp-pyq',
   path: '/rtp-pyq',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedReflectionRoute = AuthenticatedReflectionRouteImport.update({
+  id: '/reflection',
+  path: '/reflection',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
@@ -142,6 +148,7 @@ export interface FileRoutesByFullPath {
   '/planner': typeof AuthenticatedPlannerRoute
   '/pomodoro': typeof AuthenticatedPomodoroRoute
   '/profile': typeof AuthenticatedProfileRoute
+  '/reflection': typeof AuthenticatedReflectionRoute
   '/rtp-pyq': typeof AuthenticatedRtpPyqRoute
 }
 export interface FileRoutesByTo {
@@ -162,6 +169,7 @@ export interface FileRoutesByTo {
   '/planner': typeof AuthenticatedPlannerRoute
   '/pomodoro': typeof AuthenticatedPomodoroRoute
   '/profile': typeof AuthenticatedProfileRoute
+  '/reflection': typeof AuthenticatedReflectionRoute
   '/rtp-pyq': typeof AuthenticatedRtpPyqRoute
 }
 export interface FileRoutesById {
@@ -184,6 +192,7 @@ export interface FileRoutesById {
   '/_authenticated/planner': typeof AuthenticatedPlannerRoute
   '/_authenticated/pomodoro': typeof AuthenticatedPomodoroRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
+  '/_authenticated/reflection': typeof AuthenticatedReflectionRoute
   '/_authenticated/rtp-pyq': typeof AuthenticatedRtpPyqRoute
 }
 export interface FileRouteTypes {
@@ -206,6 +215,7 @@ export interface FileRouteTypes {
     | '/planner'
     | '/pomodoro'
     | '/profile'
+    | '/reflection'
     | '/rtp-pyq'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -226,6 +236,7 @@ export interface FileRouteTypes {
     | '/planner'
     | '/pomodoro'
     | '/profile'
+    | '/reflection'
     | '/rtp-pyq'
   id:
     | '__root__'
@@ -247,6 +258,7 @@ export interface FileRouteTypes {
     | '/_authenticated/planner'
     | '/_authenticated/pomodoro'
     | '/_authenticated/profile'
+    | '/_authenticated/reflection'
     | '/_authenticated/rtp-pyq'
   fileRoutesById: FileRoutesById
 }
@@ -300,6 +312,13 @@ declare module '@tanstack/react-router' {
       path: '/rtp-pyq'
       fullPath: '/rtp-pyq'
       preLoaderRoute: typeof AuthenticatedRtpPyqRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/reflection': {
+      id: '/_authenticated/reflection'
+      path: '/reflection'
+      fullPath: '/reflection'
+      preLoaderRoute: typeof AuthenticatedReflectionRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/profile': {
@@ -410,6 +429,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPlannerRoute: typeof AuthenticatedPlannerRoute
   AuthenticatedPomodoroRoute: typeof AuthenticatedPomodoroRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
+  AuthenticatedReflectionRoute: typeof AuthenticatedReflectionRoute
   AuthenticatedRtpPyqRoute: typeof AuthenticatedRtpPyqRoute
 }
 
@@ -427,6 +447,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPlannerRoute: AuthenticatedPlannerRoute,
   AuthenticatedPomodoroRoute: AuthenticatedPomodoroRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
+  AuthenticatedReflectionRoute: AuthenticatedReflectionRoute,
   AuthenticatedRtpPyqRoute: AuthenticatedRtpPyqRoute,
 }
 
