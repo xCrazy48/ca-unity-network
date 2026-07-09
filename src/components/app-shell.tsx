@@ -32,9 +32,7 @@ import { UnityLogo } from "@/components/logo";
 
 const nav = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/mock-analyzer", label: "AI Mock Analyzer", icon: Brain },
   { to: "/study-planner", label: "AI Study Planner", icon: Sparkles },
-  { to: "/mentoring", label: "1:1 Mentoring", icon: MessageCircle },
   { to: "/calendar", label: "Exam Calendar", icon: CalendarDays },
   { to: "/papers", label: "Papers", icon: LibraryBig },
   { to: "/chapters", label: "Chapters", icon: Target },
