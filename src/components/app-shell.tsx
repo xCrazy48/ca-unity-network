@@ -2,6 +2,7 @@ import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { type ReactNode } from "react";
 import {
+  Bell,
   BookMarked,
   Brain,
   CalendarDays,
@@ -10,14 +11,17 @@ import {
   FlaskConical,
   LayoutDashboard,
   LibraryBig,
+  LineChart,
   ListChecks,
   LogOut,
   Settings,
   Sparkles,
   Target,
+  Timer,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useLocalReminders } from "@/hooks/use-reminders";
 
 const nav = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -30,6 +34,9 @@ const nav = [
   { to: "/mistakes", label: "Mistake Book", icon: BookMarked },
   { to: "/formulas", label: "Formula Vault", icon: FlaskConical },
   { to: "/planner", label: "Planner", icon: ListChecks },
+  { to: "/pomodoro", label: "Pomodoro", icon: Timer },
+  { to: "/reflection", label: "Weekly Reflection", icon: LineChart },
+  { to: "/reminders", label: "Reminders", icon: Bell },
   { to: "/ai", label: "AI Engine", icon: Brain },
 ];
 
@@ -37,6 +44,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  useLocalReminders();
 
   const { data: profile } = useQuery({
     queryKey: ["profile"],

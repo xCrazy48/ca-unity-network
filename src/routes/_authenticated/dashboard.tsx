@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 
 import { AppShell } from "@/components/app-shell";
+import { QuoteDialog } from "@/components/quote-dialog";
+import { MentoringCard } from "@/components/mentoring-card";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -104,6 +106,7 @@ function Dashboard() {
 
   return (
     <AppShell>
+      <QuoteDialog />
       {needsOnboarding && (
         <Link
           to="/onboarding"
@@ -259,6 +262,10 @@ function Dashboard() {
         <QuickAction icon={Target} title="Update chapter progress" body="Keep the readiness score honest." to="/chapters" />
         <QuickAction icon={Brain} title="Generate revision plan" body="7-day, 3-day, or 1-day AI plan per paper." to="/ai" />
       </section>
+
+      <div className="mt-8">
+        <MentoringCard />
+      </div>
     </AppShell>
   );
 }

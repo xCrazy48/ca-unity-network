@@ -71,7 +71,6 @@ function Landing() {
           <nav className="hidden items-center gap-8 md:flex">
             <a href="#features" className="text-sm text-muted-foreground hover:text-foreground">Features</a>
             <a href="#modules" className="text-sm text-muted-foreground hover:text-foreground">Modules</a>
-            <a href="#pricing" className="text-sm text-muted-foreground hover:text-foreground">Pricing</a>
             <a href="#faq" className="text-sm text-muted-foreground hover:text-foreground">FAQ</a>
           </nav>
           <div className="flex items-center gap-2">
@@ -216,14 +215,47 @@ function Landing() {
         </div>
       </section>
 
-      {/* Pricing */}
-      <section id="pricing" className="border-y border-border bg-card/40">
-        <div className="mx-auto grid max-w-7xl gap-8 px-6 py-24 md:grid-cols-3">
-          <PricingCard name="Solo" price="Free" tagline="Start your attempt today." features={["All modules", "1 exam group", "Basic AI brief"]} />
-          <PricingCard name="Aspirant" price="₹499" period="/mo" featured tagline="For serious CA Inter takers." features={["Everything in Solo", "AI Revision Engine", "Rescue Mode", "Weekly AI Review", "Unlimited mocks"]} />
-          <PricingCard name="Mentor" price="₹1,499" period="/mo" tagline="For coaching institutes." features={["Everything in Aspirant", "Multi-student cohort", "Analytics for mentors", "Priority support"]} />
+      {/* Free-forever banner + WhatsApp mentoring */}
+      <section className="border-y border-border bg-card/40">
+        <div className="mx-auto grid max-w-7xl gap-8 px-6 py-20 md:grid-cols-2">
+          <div className="rounded-2xl border border-gold/40 bg-hero p-8 shadow-glow">
+            <p className="text-xs uppercase tracking-[0.2em] text-gold">Always free</p>
+            <h3 className="mt-3 font-display text-3xl font-semibold">
+              Every feature. Zero paywalls.
+            </h3>
+            <p className="mt-3 text-sm text-muted-foreground">
+              Create an account and unlock the full CA Unity Network — planner, AI Engine,
+              mocks, mistake book, formulas, Pomodoro, reflection, everything. Forever free.
+            </p>
+            <Link
+              to="/auth"
+              search={{ mode: "signup" }}
+              className="mt-6 inline-flex items-center gap-2 rounded-lg bg-gold px-5 py-2.5 text-sm font-medium text-primary-foreground shadow-elegant hover:opacity-90"
+            >
+              Create your account <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+          <div className="rounded-2xl border border-border bg-card p-8">
+            <p className="text-xs uppercase tracking-[0.2em] text-gold">Personal Mentoring</p>
+            <h3 className="mt-3 font-display text-3xl font-semibold">
+              Want a mentor in your corner?
+            </h3>
+            <p className="mt-3 text-sm text-muted-foreground">
+              Book 1:1 mentoring with Ronil Dodhia on WhatsApp — strategy, doubt-solving,
+              and honest feedback tailored to your attempt.
+            </p>
+            <a
+              href={`https://wa.me/918828828184?text=${encodeURIComponent("Hi Ronil, I'd like personal mentoring for my CA Inter prep via CA Unity Network.")}`}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-6 inline-flex items-center gap-2 rounded-lg border border-gold/40 bg-background px-5 py-2.5 text-sm font-medium hover:bg-accent"
+            >
+              Chat on WhatsApp · +91 88288 28184
+            </a>
+          </div>
         </div>
       </section>
+
 
       {/* FAQ */}
       <section id="faq" className="mx-auto max-w-4xl px-6 py-24">
@@ -312,57 +344,3 @@ function PlanCard({ title, body, tag }: { title: string; body: string; tag: stri
   );
 }
 
-function PricingCard({
-  name,
-  price,
-  period,
-  tagline,
-  features,
-  featured,
-}: {
-  name: string;
-  price: string;
-  period?: string;
-  tagline: string;
-  features: string[];
-  featured?: boolean;
-}) {
-  return (
-    <div
-      className={`relative rounded-2xl border p-8 ${
-        featured ? "border-gold/60 bg-card shadow-glow" : "border-border bg-card"
-      }`}
-    >
-      {featured && (
-        <div className="absolute -top-3 left-6 rounded-full bg-gold px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-primary-foreground">
-          Most popular
-        </div>
-      )}
-      <h3 className="font-display text-2xl font-semibold">{name}</h3>
-      <p className="mt-1 text-sm text-muted-foreground">{tagline}</p>
-      <div className="mt-6 flex items-end gap-1">
-        <span className="font-display text-5xl font-semibold">{price}</span>
-        {period && <span className="pb-2 text-sm text-muted-foreground">{period}</span>}
-      </div>
-      <ul className="mt-6 space-y-2 text-sm">
-        {features.map((f) => (
-          <li key={f} className="flex items-start gap-2">
-            <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-gold" />
-            {f}
-          </li>
-        ))}
-      </ul>
-      <Link
-        to="/auth"
-        search={{ mode: "signup" }}
-        className={`mt-8 inline-flex w-full items-center justify-center rounded-lg px-4 py-2.5 text-sm font-medium transition ${
-          featured
-            ? "bg-gold text-primary-foreground hover:opacity-90"
-            : "border border-border hover:bg-accent"
-        }`}
-      >
-        Get started
-      </Link>
-    </div>
-  );
-}
