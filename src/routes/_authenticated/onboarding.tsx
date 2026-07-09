@@ -9,12 +9,9 @@ export const Route = createFileRoute("/_authenticated/onboarding")({
   component: Onboarding,
 });
 
-const ATTEMPTS = [
-  { v: "may_2025", l: "May 2025" },
-  { v: "sep_2025", l: "September 2025" },
-  { v: "jan_2026", l: "January 2026" },
-  { v: "may_2026", l: "May 2026" },
-  { v: "sep_2026", l: "September 2026" },
+const LEVELS = [
+  { v: "inter", l: "CA Intermediate" },
+  { v: "final", l: "CA Final" },
 ] as const;
 
 const GROUPS = [
@@ -23,11 +20,19 @@ const GROUPS = [
   { v: "both", l: "Both Groups" },
 ] as const;
 
+const MONTHS = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+
 function Onboarding() {
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [fullName, setFullName] = useState("");
-  const [attempt, setAttempt] = useState<string>("may_2026");
+  const [level, setLevel] = useState<string>("inter");
+  const now = new Date();
+  const [examMonth, setExamMonth] = useState<number>(now.getMonth() + 1);
+  const [examYear, setExamYear] = useState<number>(now.getFullYear());
   const [group, setGroup] = useState<string>("both");
   const [hours, setHours] = useState(6);
   const [coaching, setCoaching] = useState("");
@@ -37,7 +42,9 @@ function Onboarding() {
     supabase.from("profiles").select("*").maybeSingle().then(({ data }) => {
       if (data) {
         setFullName(data.full_name ?? "");
-        if (data.attempt) setAttempt(data.attempt);
+        if ((data as any).level) setLevel((data as any).level);
+        if ((data as any).exam_month) setExamMonth(Number((data as any).exam_month));
+        if ((data as any).exam_year) setExamYear(Number((data as any).exam_year));
         if (data.exam_group) setGroup(data.exam_group);
         if (data.daily_study_hours) setHours(Number(data.daily_study_hours));
         setCoaching(data.coaching_schedule ?? "");
@@ -49,25 +56,31 @@ function Onboarding() {
     setSaving(true);
     const { data: userRes } = await supabase.auth.getUser();
     const uid = userRes.user!.id;
+    const examDate = `${examYear}-${String(examMonth).padStart(2, "0")}-01`;
     const { error } = await supabase.from("profiles").upsert({
       id: uid,
       full_name: fullName,
-      attempt: attempt as never,
+      level: level as never,
+      exam_month: examMonth as never,
+      exam_year: examYear as never,
+      exam_date: examDate as never,
       exam_group: group as never,
       daily_study_hours: hours,
       coaching_schedule: coaching,
       onboarded: true,
-    });
+    } as never);
     setSaving(false);
     if (error) return toast.error(error.message);
     toast.success("You're all set");
     navigate({ to: "/calendar" });
   };
 
+  const yearOptions = Array.from({ length: 6 }, (_, i) => now.getFullYear() + i);
+
   return (
     <AppShell>
       <div className="mx-auto max-w-2xl">
-        <p className="text-sm uppercase tracking-[0.2em] text-gold">Set up · Step {step + 1} of 4</p>
+        <p className="text-sm uppercase tracking-[0.2em] text-gold">Set up · Step {step + 1} of 5</p>
         <h1 className="mt-2 font-display text-4xl font-semibold">Let's build your attempt.</h1>
 
         <div className="mt-10 rounded-2xl border border-border bg-card p-8 shadow-elegant">
@@ -83,25 +96,55 @@ function Onboarding() {
             </Field>
           )}
           {step === 1 && (
-            <Field label="Which attempt are you targeting?">
-              <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
-                {ATTEMPTS.map((a) => (
+            <Field label="Which level are you preparing for?">
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                {LEVELS.map((lv) => (
                   <button
-                    key={a.v}
-                    onClick={() => setAttempt(a.v)}
+                    key={lv.v}
+                    onClick={() => setLevel(lv.v)}
                     className={`rounded-lg border px-4 py-3 text-sm transition ${
-                      attempt === a.v
+                      level === lv.v
                         ? "border-gold bg-accent text-foreground shadow-elegant"
                         : "border-border hover:border-gold/40"
                     }`}
                   >
-                    {a.l}
+                    {lv.l}
                   </button>
                 ))}
               </div>
+              <p className="mt-3 text-xs text-muted-foreground">
+                Heads up: your level can only be changed 3 times in your lifetime.
+              </p>
             </Field>
           )}
           {step === 2 && (
+            <Field label="When is your exam?">
+              <div className="mt-4 grid grid-cols-2 gap-3">
+                <select
+                  value={examMonth}
+                  onChange={(e) => setExamMonth(Number(e.target.value))}
+                  className="rounded-lg border border-input bg-background px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-gold"
+                >
+                  {MONTHS.map((m, i) => (
+                    <option key={m} value={i + 1}>{m}</option>
+                  ))}
+                </select>
+                <select
+                  value={examYear}
+                  onChange={(e) => setExamYear(Number(e.target.value))}
+                  className="rounded-lg border border-input bg-background px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-gold"
+                >
+                  {yearOptions.map((y) => (
+                    <option key={y} value={y}>{y}</option>
+                  ))}
+                </select>
+              </div>
+              <p className="mt-3 text-xs text-muted-foreground">
+                We'll default your exam date to the 1st of {MONTHS[examMonth - 1]} {examYear}. You can fine-tune it later from your profile.
+              </p>
+            </Field>
+          )}
+          {step === 3 && (
             <Field label="Which group(s)?">
               <div className="mt-4 grid grid-cols-3 gap-2">
                 {GROUPS.map((g) => (
@@ -120,7 +163,7 @@ function Onboarding() {
               </div>
             </Field>
           )}
-          {step === 3 && (
+          {step === 4 && (
             <div className="space-y-6">
               <Field label={`Daily study hours: ${hours}`}>
                 <input
@@ -153,7 +196,7 @@ function Onboarding() {
             >
               Back
             </button>
-            {step < 3 ? (
+            {step < 4 ? (
               <button
                 onClick={() => setStep(step + 1)}
                 disabled={step === 0 && !fullName}
