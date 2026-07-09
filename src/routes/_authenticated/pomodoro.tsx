@@ -134,25 +134,18 @@ function PomodoroPage() {
     p === "focus" ? settings.focus : p === "short" ? settings.short : settings.long;
 
   async function saveSession(actualSeconds: number, interrupted: boolean) {
-    if (phase !== "focus" || actualSeconds < 30) return; // ignore tiny/break sessions
+    if (phase !== "focus" || actualSeconds < 30) return;
     try {
-      const { data: u } = await supabase.auth.getUser();
-      if (!u.user) return;
-      await supabase.from("focus_sessions").insert({
-        user_id: u.user.id,
-        started_at: new Date(startedAtRef.current ?? Date.now() - actualSeconds * 1000).toISOString(),
-        ended_at: new Date().toISOString(),
-        planned_minutes: settings.focus,
-        actual_seconds: actualSeconds,
-        focus_mode: settings.focusMode,
-        interrupted,
-        phase: "focus",
+      await logSession({
+        data: {
+          started_at: new Date(startedAtRef.current ?? Date.now() - actualSeconds * 1000).toISOString(),
+          ended_at: new Date().toISOString(),
+          planned_minutes: settings.focus,
+          actual_seconds: actualSeconds,
+          focus_mode: settings.focusMode,
+          interrupted,
+        },
       });
-      if (!interrupted) {
-        // XP: 1 per minute of focus, max 60
-        const xp = Math.min(60, Math.round(actualSeconds / 60));
-        await supabase.rpc("award_xp" as never, { _user_id: u.user.id, _amount: xp } as never);
-      }
       qc.invalidateQueries({ queryKey: ["focus_stats"] });
       qc.invalidateQueries({ queryKey: ["user_xp"] });
     } catch (e) {
