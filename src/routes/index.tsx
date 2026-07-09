@@ -72,7 +72,6 @@ function Landing() {
             <a href="#features" className="text-sm text-muted-foreground hover:text-foreground">Features</a>
             <a href="#modules" className="text-sm text-muted-foreground hover:text-foreground">Modules</a>
             <a href="#faq" className="text-sm text-muted-foreground hover:text-foreground">FAQ</a>
-            <a href="#faq" className="text-sm text-muted-foreground hover:text-foreground">FAQ</a>
           </nav>
           <div className="flex items-center gap-2">
             <Link to="/auth" className="hidden text-sm text-muted-foreground hover:text-foreground sm:inline">Sign in</Link>
