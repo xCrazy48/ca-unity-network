@@ -38,10 +38,13 @@ function CalendarPage() {
     }
   }, [config]);
 
+  const userLevel = (profile as { level?: string } | null)?.level ?? "inter";
   const filtered = papers?.filter((p) => {
+    if ((p as { level?: string }).level && (p as { level?: string }).level !== userLevel) return false;
     if (!profile?.exam_group || profile.exam_group === "both") return true;
     return p.paper_group === profile.exam_group;
   }) ?? [];
+
 
   const save = async () => {
     const { data: u } = await supabase.auth.getUser();
