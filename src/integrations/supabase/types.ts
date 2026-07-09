@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_logs: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          id: string
+          ip_address: unknown
+          metadata: Json
+          target_id: string | null
+          target_type: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: unknown
+          metadata?: Json
+          target_id?: string | null
+          target_type?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: unknown
+          metadata?: Json
+          target_id?: string | null
+          target_type?: string | null
+        }
+        Relationships: []
+      }
       chapter_progress: {
         Row: {
           chapter_id: string
@@ -114,6 +147,54 @@ export type Database = {
         }
         Relationships: []
       }
+      flashcards: {
+        Row: {
+          back: string
+          correct_count: number
+          created_at: string
+          ease: number
+          front: string
+          id: string
+          interval_days: number
+          next_review: string | null
+          reviews_count: number
+          subject: string | null
+          tags: string[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          back: string
+          correct_count?: number
+          created_at?: string
+          ease?: number
+          front: string
+          id?: string
+          interval_days?: number
+          next_review?: string | null
+          reviews_count?: number
+          subject?: string | null
+          tags?: string[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          back?: string
+          correct_count?: number
+          created_at?: string
+          ease?: number
+          front?: string
+          id?: string
+          interval_days?: number
+          next_review?: string | null
+          reviews_count?: number
+          subject?: string | null
+          tags?: string[]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       formulas: {
         Row: {
           body: string
@@ -176,6 +257,51 @@ export type Database = {
             referencedColumns: ["code"]
           },
         ]
+      }
+      login_history: {
+        Row: {
+          browser: string | null
+          country: string | null
+          created_at: string
+          device: string | null
+          event_type: string
+          id: string
+          ip_address: unknown
+          os: string | null
+          provider: string | null
+          session_duration_seconds: number | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          browser?: string | null
+          country?: string | null
+          created_at?: string
+          device?: string | null
+          event_type: string
+          id?: string
+          ip_address?: unknown
+          os?: string | null
+          provider?: string | null
+          session_duration_seconds?: number | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          browser?: string | null
+          country?: string | null
+          created_at?: string
+          device?: string | null
+          event_type?: string
+          id?: string
+          ip_address?: unknown
+          os?: string | null
+          provider?: string | null
+          session_duration_seconds?: number | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       mistakes: {
         Row: {
@@ -343,6 +469,75 @@ export type Database = {
           },
         ]
       }
+      notes: {
+        Row: {
+          attachment_path: string | null
+          content: string | null
+          created_at: string
+          id: string
+          subject: string | null
+          tags: string[]
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          attachment_path?: string | null
+          content?: string | null
+          created_at?: string
+          id?: string
+          subject?: string | null
+          tags?: string[]
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          attachment_path?: string | null
+          content?: string | null
+          created_at?: string
+          id?: string
+          subject?: string | null
+          tags?: string[]
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          action_url: string | null
+          body: string | null
+          category: string
+          created_at: string
+          id: string
+          read_at: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          action_url?: string | null
+          body?: string | null
+          category?: string
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          action_url?: string | null
+          body?: string | null
+          category?: string
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       papers: {
         Row: {
           code: string
@@ -369,6 +564,7 @@ export type Database = {
           attempt: Database["public"]["Enums"]["exam_attempt"] | null
           avatar_url: string | null
           coaching_schedule: string | null
+          country: string | null
           created_at: string
           daily_study_hours: number | null
           exam_date: string | null
@@ -376,16 +572,26 @@ export type Database = {
           exam_month: number | null
           exam_year: number | null
           full_name: string | null
+          google_id: string | null
           id: string
+          last_active_at: string | null
+          last_login_at: string | null
           level: Database["public"]["Enums"]["exam_level"] | null
           level_change_count: number
+          marketing_opt_in: boolean
+          mobile_number: string | null
           onboarded: boolean
+          preferred_language: string | null
+          referral_code: string | null
+          referral_source: string | null
+          timezone: string | null
           updated_at: string
         }
         Insert: {
           attempt?: Database["public"]["Enums"]["exam_attempt"] | null
           avatar_url?: string | null
           coaching_schedule?: string | null
+          country?: string | null
           created_at?: string
           daily_study_hours?: number | null
           exam_date?: string | null
@@ -393,16 +599,26 @@ export type Database = {
           exam_month?: number | null
           exam_year?: number | null
           full_name?: string | null
+          google_id?: string | null
           id: string
+          last_active_at?: string | null
+          last_login_at?: string | null
           level?: Database["public"]["Enums"]["exam_level"] | null
           level_change_count?: number
+          marketing_opt_in?: boolean
+          mobile_number?: string | null
           onboarded?: boolean
+          preferred_language?: string | null
+          referral_code?: string | null
+          referral_source?: string | null
+          timezone?: string | null
           updated_at?: string
         }
         Update: {
           attempt?: Database["public"]["Enums"]["exam_attempt"] | null
           avatar_url?: string | null
           coaching_schedule?: string | null
+          country?: string | null
           created_at?: string
           daily_study_hours?: number | null
           exam_date?: string | null
@@ -410,11 +626,44 @@ export type Database = {
           exam_month?: number | null
           exam_year?: number | null
           full_name?: string | null
+          google_id?: string | null
           id?: string
+          last_active_at?: string | null
+          last_login_at?: string | null
           level?: Database["public"]["Enums"]["exam_level"] | null
           level_change_count?: number
+          marketing_opt_in?: boolean
+          mobile_number?: string | null
           onboarded?: boolean
+          preferred_language?: string | null
+          referral_code?: string | null
+          referral_source?: string | null
+          timezone?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      referrals: {
+        Row: {
+          code_used: string | null
+          created_at: string
+          id: string
+          referred_id: string
+          referrer_id: string
+        }
+        Insert: {
+          code_used?: string | null
+          created_at?: string
+          id?: string
+          referred_id: string
+          referrer_id: string
+        }
+        Update: {
+          code_used?: string | null
+          created_at?: string
+          id?: string
+          referred_id?: string
+          referrer_id?: string
         }
         Relationships: []
       }
@@ -474,6 +723,48 @@ export type Database = {
             referencedColumns: ["code"]
           },
         ]
+      }
+      study_sessions: {
+        Row: {
+          chapter_id: string | null
+          created_at: string
+          duration_seconds: number | null
+          ended_at: string | null
+          id: string
+          notes: string | null
+          questions_attempted: number
+          questions_correct: number
+          started_at: string
+          subject: string | null
+          user_id: string
+        }
+        Insert: {
+          chapter_id?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          ended_at?: string | null
+          id?: string
+          notes?: string | null
+          questions_attempted?: number
+          questions_correct?: number
+          started_at?: string
+          subject?: string | null
+          user_id: string
+        }
+        Update: {
+          chapter_id?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          ended_at?: string | null
+          id?: string
+          notes?: string | null
+          questions_attempted?: number
+          questions_correct?: number
+          started_at?: string
+          subject?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       tasks: {
         Row: {
@@ -547,6 +838,60 @@ export type Database = {
           },
         ]
       }
+      two_factor_recovery_codes: {
+        Row: {
+          code_hash: string
+          created_at: string
+          id: string
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          code_hash: string
+          created_at?: string
+          id?: string
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          code_hash?: string
+          created_at?: string
+          id?: string
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_activity: {
+        Row: {
+          activity_type: string
+          created_at: string
+          duration_seconds: number | null
+          id: string
+          metadata: Json
+          page_path: string | null
+          user_id: string
+        }
+        Insert: {
+          activity_type: string
+          created_at?: string
+          duration_seconds?: number | null
+          id?: string
+          metadata?: Json
+          page_path?: string | null
+          user_id: string
+        }
+        Update: {
+          activity_type?: string
+          created_at?: string
+          duration_seconds?: number | null
+          id?: string
+          metadata?: Json
+          page_path?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
@@ -565,12 +910,54 @@ export type Database = {
         }
         Relationships: []
       }
+      user_settings: {
+        Row: {
+          created_at: string
+          email_notifications: boolean
+          push_notifications: boolean
+          remember_me: boolean
+          reminder_daily_brief: boolean
+          reminder_revision: boolean
+          theme: string
+          two_factor_enabled: boolean
+          two_factor_verified_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email_notifications?: boolean
+          push_notifications?: boolean
+          remember_me?: boolean
+          reminder_daily_brief?: boolean
+          reminder_revision?: boolean
+          theme?: string
+          two_factor_enabled?: boolean
+          two_factor_verified_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email_notifications?: boolean
+          push_notifications?: boolean
+          remember_me?: boolean
+          reminder_daily_brief?: boolean
+          reminder_revision?: boolean
+          theme?: string
+          two_factor_enabled?: boolean
+          two_factor_verified_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      gen_referral_code: { Args: never; Returns: string }
     }
     Enums: {
       app_role: "admin" | "user"
