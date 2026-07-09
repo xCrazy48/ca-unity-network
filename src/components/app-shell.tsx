@@ -22,6 +22,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useLocalReminders } from "@/hooks/use-reminders";
+import { useActivityTracker } from "@/hooks/use-activity-tracker";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 
@@ -47,6 +48,17 @@ export function AppShell({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   useLocalReminders();
+  useActivityTracker();
+
+  const { data: isAdmin } = useQuery({
+    queryKey: ["is-admin"],
+    queryFn: async () => {
+      const { data: u } = await supabase.auth.getUser();
+      if (!u.user) return false;
+      const { data } = await supabase.from("user_roles").select("role").eq("user_id", u.user.id).eq("role", "admin").maybeSingle();
+      return !!data;
+    },
+  });
 
   const { data: profile } = useQuery({
     queryKey: ["profile"],
