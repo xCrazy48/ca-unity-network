@@ -56,7 +56,7 @@ const testimonials = [
 
 const faqs = [
   { q: "How is this different from Notion or a planner app?", a: "CA Unity Network is built around the ICAI syllabus, weightage, and paper structure. It doesn't just store tasks — it decides them for you based on your mock scores, mistakes, and time left." },
-  { q: "Which sessions does it cover?", a: "May 2024, September 2024, January 2025, May 2025, September 2025, January 2026, and May 2026 — for RTPs, MTPs, and PYQs." },
+  { q: "Which sessions does it cover?", a: "Every ICAI session from May 2024 through the upcoming attempt — for RTPs, MTPs, and PYQs across CA Intermediate and CA Final." },
   { q: "Can I use it for just one group?", a: "Yes. Choose Group 1, Group 2, or Both during setup. Exam dates are fully editable for the 3-day or 6-day schedule." },
   { q: "Is my data private?", a: "Yes. Every record is row-level-secured to your account. Nobody else — not even other students — can see your data." },
 ];
