@@ -115,6 +115,20 @@ export function AppShell({ children }: { children: ReactNode }) {
           >
             <Settings className="h-4 w-4" /> Profile
           </Link>
+          <Link
+            to="/settings"
+            className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+          >
+            <Settings className="h-4 w-4" /> Settings
+          </Link>
+          {isAdmin && (
+            <Link
+              to="/admin"
+              className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-gold hover:bg-sidebar-accent/50"
+            >
+              <Settings className="h-4 w-4" /> Admin
+            </Link>
+          )}
           <button
             onClick={signOut}
             className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
