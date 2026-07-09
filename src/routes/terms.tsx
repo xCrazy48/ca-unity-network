@@ -192,7 +192,7 @@ function TermsPage() {
           <Block title="15. Contact us">
             <p>
               Have a question, concern, or feedback? Reach us on WhatsApp at{" "}
-              <a href="https://wa.me/918828828184" className="text-gold hover:underline">
+              <a href="https://wa.me/918828828184" target="_blank" rel="noreferrer" className="text-gold hover:underline">
                 +91 88288 28184
               </a>
               . We read every message.
