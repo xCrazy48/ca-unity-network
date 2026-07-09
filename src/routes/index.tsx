@@ -76,9 +76,12 @@ function Landing() {
           <nav className="hidden items-center gap-8 md:flex">
             <a href="#features" className="text-sm text-muted-foreground hover:text-foreground">Features</a>
             <a href="#modules" className="text-sm text-muted-foreground hover:text-foreground">Modules</a>
+            <Link to="/about" className="text-sm text-muted-foreground hover:text-foreground">About</Link>
+            <Link to="/team" className="text-sm text-muted-foreground hover:text-foreground">Team</Link>
             <a href="#faq" className="text-sm text-muted-foreground hover:text-foreground">FAQ</a>
           </nav>
           <div className="flex items-center gap-2">
+            <ThemeToggle />
             <Link to="/auth" className="hidden text-sm text-muted-foreground hover:text-foreground sm:inline">Sign in</Link>
             <Link
               to="/auth"
@@ -88,6 +91,7 @@ function Landing() {
               Get started <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
+
         </div>
       </header>
 
