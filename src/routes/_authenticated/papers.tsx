@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/page-header";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+import { useUserPapers } from "@/hooks/use-user-papers";
 
 export const Route = createFileRoute("/_authenticated/papers")({
   head: () => ({
@@ -20,11 +21,7 @@ export const Route = createFileRoute("/_authenticated/papers")({
 });
 
 function PapersPage() {
-  const { data: papers } = useQuery({
-    queryKey: ["papers"],
-    queryFn: async () =>
-      (await supabase.from("papers").select("*").order("sort_order")).data ?? [],
-  });
+  const { data: papers } = useUserPapers();
 
   const { data: chapters } = useQuery({
     queryKey: ["chapters"],

@@ -75,19 +75,6 @@ function CalendarPage() {
         </button>
       </div>
 
-      <div className="mt-6 inline-flex rounded-lg border border-border p-1">
-        {(["3_day", "6_day"] as const).map((t) => (
-          <button
-            key={t}
-            onClick={() => setScheduleType(t)}
-            className={`rounded-md px-4 py-1.5 text-sm ${
-              scheduleType === t ? "bg-gold text-primary-foreground" : "text-muted-foreground"
-            }`}
-          >
-            {t === "3_day" ? "3-day schedule" : "6-day schedule"}
-          </button>
-        ))}
-      </div>
 
       <div className="mt-8 grid gap-4 md:grid-cols-2">
         {filtered.map((p) => {

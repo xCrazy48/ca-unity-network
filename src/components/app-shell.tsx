@@ -14,6 +14,7 @@ import {
   LineChart,
   ListChecks,
   LogOut,
+  MessageCircle,
   Settings,
 
   Target,
@@ -30,6 +31,7 @@ import { UnityLogo } from "@/components/logo";
 
 const nav = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/mentoring", label: "1:1 Mentoring", icon: MessageCircle },
   { to: "/calendar", label: "Exam Calendar", icon: CalendarDays },
   { to: "/papers", label: "Papers", icon: LibraryBig },
   { to: "/chapters", label: "Chapters", icon: Target },
