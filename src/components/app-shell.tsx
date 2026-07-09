@@ -15,7 +15,7 @@ import {
   ListChecks,
   LogOut,
   Settings,
-  Shield,
+  Settings,
   Target,
   Timer,
 } from "lucide-react";
