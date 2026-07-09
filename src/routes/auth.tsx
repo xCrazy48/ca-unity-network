@@ -1,11 +1,15 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { z } from "zod";
 import { ArrowRight, Sparkles } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
+import { recordLogin } from "@/lib/activity.functions";
+import { consumeRecoveryCode } from "@/lib/two-factor.functions";
+import { currentUA } from "@/lib/user-agent";
 
 const searchSchema = z.object({
   mode: z.enum(["signin", "signup"]).optional(),

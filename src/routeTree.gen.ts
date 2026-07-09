@@ -16,6 +16,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedRtpPyqRouteImport } from './routes/_authenticated/rtp-pyq'
 import { Route as AuthenticatedRemindersRouteImport } from './routes/_authenticated/reminders'
 import { Route as AuthenticatedReflectionRouteImport } from './routes/_authenticated/reflection'
@@ -32,6 +33,7 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedChaptersRouteImport } from './routes/_authenticated/chapters'
 import { Route as AuthenticatedCalendarRouteImport } from './routes/_authenticated/calendar'
 import { Route as AuthenticatedAiRouteImport } from './routes/_authenticated/ai'
+import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 
 const TeamRoute = TeamRouteImport.update({
   id: '/team',
@@ -66,6 +68,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedRtpPyqRoute = AuthenticatedRtpPyqRouteImport.update({
   id: '/rtp-pyq',
@@ -147,6 +154,11 @@ const AuthenticatedAiRoute = AuthenticatedAiRouteImport.update({
   path: '/ai',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -155,6 +167,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/team': typeof TeamRoute
+  '/admin': typeof AuthenticatedAdminRoute
   '/ai': typeof AuthenticatedAiRoute
   '/calendar': typeof AuthenticatedCalendarRoute
   '/chapters': typeof AuthenticatedChaptersRoute
@@ -171,6 +184,7 @@ export interface FileRoutesByFullPath {
   '/reflection': typeof AuthenticatedReflectionRoute
   '/reminders': typeof AuthenticatedRemindersRoute
   '/rtp-pyq': typeof AuthenticatedRtpPyqRoute
+  '/settings': typeof AuthenticatedSettingsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -179,6 +193,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/team': typeof TeamRoute
+  '/admin': typeof AuthenticatedAdminRoute
   '/ai': typeof AuthenticatedAiRoute
   '/calendar': typeof AuthenticatedCalendarRoute
   '/chapters': typeof AuthenticatedChaptersRoute
@@ -195,6 +210,7 @@ export interface FileRoutesByTo {
   '/reflection': typeof AuthenticatedReflectionRoute
   '/reminders': typeof AuthenticatedRemindersRoute
   '/rtp-pyq': typeof AuthenticatedRtpPyqRoute
+  '/settings': typeof AuthenticatedSettingsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -205,6 +221,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/team': typeof TeamRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/ai': typeof AuthenticatedAiRoute
   '/_authenticated/calendar': typeof AuthenticatedCalendarRoute
   '/_authenticated/chapters': typeof AuthenticatedChaptersRoute
@@ -221,6 +238,7 @@ export interface FileRoutesById {
   '/_authenticated/reflection': typeof AuthenticatedReflectionRoute
   '/_authenticated/reminders': typeof AuthenticatedRemindersRoute
   '/_authenticated/rtp-pyq': typeof AuthenticatedRtpPyqRoute
+  '/_authenticated/settings': typeof AuthenticatedSettingsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -231,6 +249,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/sitemap.xml'
     | '/team'
+    | '/admin'
     | '/ai'
     | '/calendar'
     | '/chapters'
@@ -247,6 +266,7 @@ export interface FileRouteTypes {
     | '/reflection'
     | '/reminders'
     | '/rtp-pyq'
+    | '/settings'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -255,6 +275,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/sitemap.xml'
     | '/team'
+    | '/admin'
     | '/ai'
     | '/calendar'
     | '/chapters'
@@ -271,6 +292,7 @@ export interface FileRouteTypes {
     | '/reflection'
     | '/reminders'
     | '/rtp-pyq'
+    | '/settings'
   id:
     | '__root__'
     | '/'
@@ -280,6 +302,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/sitemap.xml'
     | '/team'
+    | '/_authenticated/admin'
     | '/_authenticated/ai'
     | '/_authenticated/calendar'
     | '/_authenticated/chapters'
@@ -296,6 +319,7 @@ export interface FileRouteTypes {
     | '/_authenticated/reflection'
     | '/_authenticated/reminders'
     | '/_authenticated/rtp-pyq'
+    | '/_authenticated/settings'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -358,6 +382,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/settings': {
+      id: '/_authenticated/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/rtp-pyq': {
       id: '/_authenticated/rtp-pyq'
@@ -471,10 +502,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAiRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedAiRoute: typeof AuthenticatedAiRoute
   AuthenticatedCalendarRoute: typeof AuthenticatedCalendarRoute
   AuthenticatedChaptersRoute: typeof AuthenticatedChaptersRoute
@@ -491,9 +530,11 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedReflectionRoute: typeof AuthenticatedReflectionRoute
   AuthenticatedRemindersRoute: typeof AuthenticatedRemindersRoute
   AuthenticatedRtpPyqRoute: typeof AuthenticatedRtpPyqRoute
+  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedAiRoute: AuthenticatedAiRoute,
   AuthenticatedCalendarRoute: AuthenticatedCalendarRoute,
   AuthenticatedChaptersRoute: AuthenticatedChaptersRoute,
@@ -510,6 +551,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedReflectionRoute: AuthenticatedReflectionRoute,
   AuthenticatedRemindersRoute: AuthenticatedRemindersRoute,
   AuthenticatedRtpPyqRoute: AuthenticatedRtpPyqRoute,
+  AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
