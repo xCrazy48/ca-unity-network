@@ -106,7 +106,7 @@ function Landing() {
           >
             <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-border/60 bg-card/50 px-3 py-1 text-xs text-muted-foreground backdrop-blur">
               <span className="h-1.5 w-1.5 rounded-full bg-gold" />
-              Built for CA Intermediate · May & Sep 2026
+              Built by a CA student, for CA students
             </div>
             <h1 className="mt-6 font-display text-5xl font-semibold leading-[1.05] tracking-tight md:text-7xl">
               The AI <span className="text-gold">command center</span> for your CA Inter attempt.
