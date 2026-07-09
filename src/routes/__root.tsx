@@ -76,24 +76,24 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "CA Unity Network — Your AI Command Center for CA Intermediate" },
+      { title: "CA Unity Network — Built by a CA student, for CA students" },
       {
         name: "description",
         content:
-          "AI-planned study, ICAI-aware chapter tracking, mock analytics, mistake book, and a rescue mode for the final stretch. Built for CA Inter aspirants.",
+          "AI-planned study, ICAI-aware chapter tracking, mock analytics, mistake book, and a rescue mode for the final stretch. Built by a CA student, for CA students.",
       },
       { name: "author", content: "Team Unity" },
       { name: "theme-color", content: "#151820" },
-      { property: "og:title", content: "CA Unity Network — Your AI Command Center for CA Intermediate" },
+      { property: "og:title", content: "CA Unity Network — Built by a CA student, for CA students" },
       {
         property: "og:description",
         content:
-          "AI-planned study, ICAI-aware chapter tracking, mock analytics, mistake book, and a rescue mode for the final stretch. Built for CA Inter aspirants.",
+          "AI-planned study, ICAI-aware chapter tracking, mock analytics, mistake book, and a rescue mode for the final stretch. Built by a CA student, for CA students.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "CA Unity Network — Your AI Command Center for CA Intermediate" },
-      { name: "twitter:description", content: "AI-planned study, ICAI-aware chapter tracking, mock analytics, mistake book, and a rescue mode for the final stretch. Built for CA Inter aspirants." },
+      { name: "twitter:title", content: "CA Unity Network — Built by a CA student, for CA students" },
+      { name: "twitter:description", content: "AI-planned study, ICAI-aware chapter tracking, mock analytics, mistake book, and a rescue mode for the final stretch. Built by a CA student, for CA students." },
       { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/5f9260e4-3973-4241-bcfa-e2a1404b94df/id-preview-5401f36a--7773eeab-3fff-44b6-9ab3-ed3b394ba686.lovable.app-1783580673352.png" },
       { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/5f9260e4-3973-4241-bcfa-e2a1404b94df/id-preview-5401f36a--7773eeab-3fff-44b6-9ab3-ed3b394ba686.lovable.app-1783580673352.png" },
     ],

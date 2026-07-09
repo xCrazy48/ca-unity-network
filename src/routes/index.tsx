@@ -24,11 +24,11 @@ import { UnityLogo } from "@/components/logo";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "CA Unity Network — Your AI Command Center for CA Intermediate" },
+      { title: "CA Unity Network — Built by a CA student, for CA students" },
       {
         name: "description",
         content:
-          "AI-planned study, ICAI-aware chapter tracking, mock analytics, mistake book, and a rescue mode for the final stretch. Built for CA Inter aspirants.",
+          "AI-planned study, ICAI-aware chapter tracking, mock analytics, mistake book, and a rescue mode for the final stretch. Built by a CA student, for CA students.",
       },
     ],
   }),
@@ -106,7 +106,7 @@ function Landing() {
           >
             <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-border/60 bg-card/50 px-3 py-1 text-xs text-muted-foreground backdrop-blur">
               <span className="h-1.5 w-1.5 rounded-full bg-gold" />
-              Built for CA Intermediate · May & Sep 2026
+              Built by a CA student, for CA students
             </div>
             <h1 className="mt-6 font-display text-5xl font-semibold leading-[1.05] tracking-tight md:text-7xl">
               The AI <span className="text-gold">command center</span> for your CA Inter attempt.
@@ -254,7 +254,7 @@ function Landing() {
               and honest feedback tailored to your attempt.
             </p>
             <a
-              href={`https://wa.me/918828828184?text=${encodeURIComponent("Hi Team Unity, I'd like personal mentoring for my CA prep via CA Unity Network.")}`}
+              href={"https://wa.me/918828828184"}
               target="_blank"
               rel="noreferrer"
               className="mt-6 inline-flex items-center gap-2 rounded-lg border border-gold/40 bg-background px-5 py-2.5 text-sm font-medium hover:bg-accent"

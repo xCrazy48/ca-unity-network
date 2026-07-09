@@ -1,9 +1,7 @@
 import { MessageCircle } from "lucide-react";
 
 const WHATSAPP_NUMBER = "918828828184";
-const WHATSAPP_LINK = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
-  "Hi Team Unity, I'd like personal mentoring for my CA prep via CA Unity Network.",
-)}`;
+const WHATSAPP_LINK = `https://wa.me/${WHATSAPP_NUMBER}`;
 
 export function MentoringCard({ variant = "default" }: { variant?: "default" | "compact" }) {
   if (variant === "compact") {
