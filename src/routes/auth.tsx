@@ -103,8 +103,9 @@ function AuthPage() {
             </p>
           </div>
           <div className="text-xs text-muted-foreground">
-            © {new Date().getFullYear()} CA Unity Network by Ronil Dodhia
+            © {new Date().getFullYear()} CA Unity Network — Developed with love by Team Unity
           </div>
+
         </div>
       </div>
 

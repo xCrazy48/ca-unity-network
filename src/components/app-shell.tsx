@@ -22,6 +22,8 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useLocalReminders } from "@/hooks/use-reminders";
+import { ThemeToggle } from "@/components/theme-toggle";
+
 
 const nav = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -91,6 +93,10 @@ export function AppShell({ children }: { children: ReactNode }) {
           })}
         </nav>
         <div className="border-t border-sidebar-border p-3">
+          <div className="mb-2 flex items-center justify-between px-1">
+            <span className="text-xs text-muted-foreground">Theme</span>
+            <ThemeToggle />
+          </div>
           <Link
             to="/profile"
             className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
@@ -109,6 +115,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             </div>
           )}
         </div>
+
       </aside>
 
       {/* Mobile top bar */}
@@ -119,7 +126,11 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
           <span className="font-display text-base font-semibold">CA Unity Network</span>
         </Link>
-        <button onClick={signOut} className="text-sm text-muted-foreground">Sign out</button>
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <button onClick={signOut} className="text-sm text-muted-foreground">Sign out</button>
+        </div>
+
       </div>
 
       <main className="md:pl-60">

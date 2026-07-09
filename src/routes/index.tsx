@@ -9,11 +9,16 @@ import {
   Compass,
   FileText,
   Flame,
+  Heart,
+  MessageCircle,
   Sparkles,
   Target,
   Timer,
   TrendingUp,
+  Users,
 } from "lucide-react";
+import { ThemeToggle } from "@/components/theme-toggle";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -71,9 +76,12 @@ function Landing() {
           <nav className="hidden items-center gap-8 md:flex">
             <a href="#features" className="text-sm text-muted-foreground hover:text-foreground">Features</a>
             <a href="#modules" className="text-sm text-muted-foreground hover:text-foreground">Modules</a>
+            <Link to="/about" className="text-sm text-muted-foreground hover:text-foreground">About</Link>
+            <Link to="/team" className="text-sm text-muted-foreground hover:text-foreground">Team</Link>
             <a href="#faq" className="text-sm text-muted-foreground hover:text-foreground">FAQ</a>
           </nav>
           <div className="flex items-center gap-2">
+            <ThemeToggle />
             <Link to="/auth" className="hidden text-sm text-muted-foreground hover:text-foreground sm:inline">Sign in</Link>
             <Link
               to="/auth"
@@ -83,6 +91,7 @@ function Landing() {
               Get started <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
+
         </div>
       </header>
 
@@ -293,14 +302,29 @@ function Landing() {
       </section>
 
       <footer className="border-t border-border">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-6 py-8 text-sm text-muted-foreground md:flex-row">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-6 py-10 text-sm text-muted-foreground md:flex-row">
           <div className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-gold" />
-            <span>CA Unity Network by Ronil Dodhia</span>
+            <Heart className="h-4 w-4 text-gold" />
+            <span>CA Unity Network — Developed with love by Team Unity</span>
           </div>
-          <div>© {new Date().getFullYear()} CA Unity Network by Ronil Dodhia. All rights reserved.</div>
+          <nav className="flex flex-wrap items-center gap-5">
+            <Link to="/about" className="inline-flex items-center gap-1 hover:text-foreground">
+              <Users className="h-3.5 w-3.5" /> About
+            </Link>
+            <Link to="/team" className="hover:text-foreground">Team</Link>
+            <a
+              href="https://wa.me/918828828184"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1 hover:text-foreground"
+            >
+              <MessageCircle className="h-3.5 w-3.5" /> Mentoring
+            </a>
+            <span>© {new Date().getFullYear()} Team Unity</span>
+          </nav>
         </div>
       </footer>
+
     </div>
   );
 }

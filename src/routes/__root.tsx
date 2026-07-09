@@ -80,7 +80,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content:
           "CA Unity Network is the AI-powered command center for CA Inter aspirants. Track chapters, mocks, MTPs, RTPs & PYQs, and let AI plan every day up to your exam.",
       },
-      { name: "author", content: "Ronil Dodhia" },
+      { name: "author", content: "Team Unity" },
       { name: "theme-color", content: "#151820" },
       { property: "og:title", content: "CA Unity Network — The AI Exam OS for CA Intermediate" },
       {
@@ -113,7 +113,13 @@ function RootShell({ children }: { children: ReactNode }) {
     <html lang="en" className="dark">
       <head>
         <HeadContent />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('cun-theme');if(!t){t=window.matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';}var r=document.documentElement;if(t==='light'){r.classList.remove('dark');}else{r.classList.add('dark');}}catch(e){}})();`,
+          }}
+        />
       </head>
+
       <body>
         {children}
         <Scripts />
