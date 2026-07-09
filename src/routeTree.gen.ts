@@ -16,6 +16,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRtpPyqRouteImport } from './routes/_authenticated/rtp-pyq'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
+import { Route as AuthenticatedPomodoroRouteImport } from './routes/_authenticated/pomodoro'
 import { Route as AuthenticatedPlannerRouteImport } from './routes/_authenticated/planner'
 import { Route as AuthenticatedPapersRouteImport } from './routes/_authenticated/papers'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
@@ -60,6 +61,11 @@ const AuthenticatedRtpPyqRoute = AuthenticatedRtpPyqRouteImport.update({
 const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPomodoroRoute = AuthenticatedPomodoroRouteImport.update({
+  id: '/pomodoro',
+  path: '/pomodoro',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedPlannerRoute = AuthenticatedPlannerRouteImport.update({
@@ -134,6 +140,7 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/papers': typeof AuthenticatedPapersRoute
   '/planner': typeof AuthenticatedPlannerRoute
+  '/pomodoro': typeof AuthenticatedPomodoroRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/rtp-pyq': typeof AuthenticatedRtpPyqRoute
 }
@@ -153,6 +160,7 @@ export interface FileRoutesByTo {
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/papers': typeof AuthenticatedPapersRoute
   '/planner': typeof AuthenticatedPlannerRoute
+  '/pomodoro': typeof AuthenticatedPomodoroRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/rtp-pyq': typeof AuthenticatedRtpPyqRoute
 }
@@ -174,6 +182,7 @@ export interface FileRoutesById {
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/papers': typeof AuthenticatedPapersRoute
   '/_authenticated/planner': typeof AuthenticatedPlannerRoute
+  '/_authenticated/pomodoro': typeof AuthenticatedPomodoroRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/rtp-pyq': typeof AuthenticatedRtpPyqRoute
 }
@@ -195,6 +204,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/papers'
     | '/planner'
+    | '/pomodoro'
     | '/profile'
     | '/rtp-pyq'
   fileRoutesByTo: FileRoutesByTo
@@ -214,6 +224,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/papers'
     | '/planner'
+    | '/pomodoro'
     | '/profile'
     | '/rtp-pyq'
   id:
@@ -234,6 +245,7 @@ export interface FileRouteTypes {
     | '/_authenticated/onboarding'
     | '/_authenticated/papers'
     | '/_authenticated/planner'
+    | '/_authenticated/pomodoro'
     | '/_authenticated/profile'
     | '/_authenticated/rtp-pyq'
   fileRoutesById: FileRoutesById
@@ -295,6 +307,13 @@ declare module '@tanstack/react-router' {
       path: '/profile'
       fullPath: '/profile'
       preLoaderRoute: typeof AuthenticatedProfileRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/pomodoro': {
+      id: '/_authenticated/pomodoro'
+      path: '/pomodoro'
+      fullPath: '/pomodoro'
+      preLoaderRoute: typeof AuthenticatedPomodoroRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/planner': {
@@ -389,6 +408,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedPapersRoute: typeof AuthenticatedPapersRoute
   AuthenticatedPlannerRoute: typeof AuthenticatedPlannerRoute
+  AuthenticatedPomodoroRoute: typeof AuthenticatedPomodoroRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedRtpPyqRoute: typeof AuthenticatedRtpPyqRoute
 }
@@ -405,6 +425,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedPapersRoute: AuthenticatedPapersRoute,
   AuthenticatedPlannerRoute: AuthenticatedPlannerRoute,
+  AuthenticatedPomodoroRoute: AuthenticatedPomodoroRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedRtpPyqRoute: AuthenticatedRtpPyqRoute,
 }
