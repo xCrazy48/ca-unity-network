@@ -3,7 +3,7 @@ import type {} from "@tanstack/react-start";
 
 const BASE_URL = "";
 
-export const Route = createFileRoute("/api/public/sitemap/xml")({
+export const Route = createFileRoute("/api/public/sitemap")({
   server: {
     handlers: {
       GET: async () => {

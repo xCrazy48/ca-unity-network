@@ -36,7 +36,7 @@ import { Route as AuthenticatedChaptersRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedCalendarRouteImport } from './routes/_authenticated/calendar'
 import { Route as AuthenticatedAiRouteImport } from './routes/_authenticated/ai'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
-import { Route as ApiPublicSitemapXmlRouteImport } from './routes/api/public/sitemap.xml'
+import { Route as ApiPublicSitemapRouteImport } from './routes/api/public/sitemap'
 
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
@@ -172,9 +172,9 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const ApiPublicSitemapXmlRoute = ApiPublicSitemapXmlRouteImport.update({
-  id: '/api/public/sitemap/xml',
-  path: '/api/public/sitemap/xml',
+const ApiPublicSitemapRoute = ApiPublicSitemapRouteImport.update({
+  id: '/api/public/sitemap',
+  path: '/api/public/sitemap',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -205,7 +205,7 @@ export interface FileRoutesByFullPath {
   '/reminders': typeof AuthenticatedRemindersRoute
   '/rtp-pyq': typeof AuthenticatedRtpPyqRoute
   '/settings': typeof AuthenticatedSettingsRoute
-  '/api/public/sitemap/xml': typeof ApiPublicSitemapXmlRoute
+  '/api/public/sitemap': typeof ApiPublicSitemapRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -234,7 +234,7 @@ export interface FileRoutesByTo {
   '/reminders': typeof AuthenticatedRemindersRoute
   '/rtp-pyq': typeof AuthenticatedRtpPyqRoute
   '/settings': typeof AuthenticatedSettingsRoute
-  '/api/public/sitemap/xml': typeof ApiPublicSitemapXmlRoute
+  '/api/public/sitemap': typeof ApiPublicSitemapRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -265,7 +265,7 @@ export interface FileRoutesById {
   '/_authenticated/reminders': typeof AuthenticatedRemindersRoute
   '/_authenticated/rtp-pyq': typeof AuthenticatedRtpPyqRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
-  '/api/public/sitemap/xml': typeof ApiPublicSitemapXmlRoute
+  '/api/public/sitemap': typeof ApiPublicSitemapRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -296,7 +296,7 @@ export interface FileRouteTypes {
     | '/reminders'
     | '/rtp-pyq'
     | '/settings'
-    | '/api/public/sitemap/xml'
+    | '/api/public/sitemap'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -325,7 +325,7 @@ export interface FileRouteTypes {
     | '/reminders'
     | '/rtp-pyq'
     | '/settings'
-    | '/api/public/sitemap/xml'
+    | '/api/public/sitemap'
   id:
     | '__root__'
     | '/'
@@ -355,7 +355,7 @@ export interface FileRouteTypes {
     | '/_authenticated/reminders'
     | '/_authenticated/rtp-pyq'
     | '/_authenticated/settings'
-    | '/api/public/sitemap/xml'
+    | '/api/public/sitemap'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -367,7 +367,7 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   TeamRoute: typeof TeamRoute
   TermsRoute: typeof TermsRoute
-  ApiPublicSitemapXmlRoute: typeof ApiPublicSitemapXmlRoute
+  ApiPublicSitemapRoute: typeof ApiPublicSitemapRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -561,11 +561,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/api/public/sitemap/xml': {
-      id: '/api/public/sitemap/xml'
-      path: '/api/public/sitemap/xml'
-      fullPath: '/api/public/sitemap/xml'
-      preLoaderRoute: typeof ApiPublicSitemapXmlRouteImport
+    '/api/public/sitemap': {
+      id: '/api/public/sitemap'
+      path: '/api/public/sitemap'
+      fullPath: '/api/public/sitemap'
+      preLoaderRoute: typeof ApiPublicSitemapRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -627,7 +627,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   TeamRoute: TeamRoute,
   TermsRoute: TermsRoute,
-  ApiPublicSitemapXmlRoute: ApiPublicSitemapXmlRoute,
+  ApiPublicSitemapRoute: ApiPublicSitemapRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
