@@ -85,7 +85,7 @@ function AboutPage() {
               sideways.
             </p>
             <p>
-              So Ronil started sketching. What would happen if the community had a proper home? Not a
+              So Team Unity started sketching. What would happen if the community had a proper home? Not a
               paywalled course. Not another PDF drop. An actual{" "}
               <span className="text-foreground font-medium">operating system</span> — one that knows
               the ICAI syllabus, tracks your mocks, remembers your mistakes, and plans your week for
@@ -94,10 +94,11 @@ function AboutPage() {
             </p>
             <p>
               That sketch became CA Unity Network. The platform you're on right now. Ideated by
-              Ronil, shaped by the community, and built with one non-negotiable rule: it stays free.
+              Team Unity, shaped by the community, and built with one non-negotiable rule: it stays free.
               Forever. For everyone.
             </p>
           </Chapter>
+
 
           <Chapter n="04" title="Nothing in our minds, everything for the students">
             <p>
