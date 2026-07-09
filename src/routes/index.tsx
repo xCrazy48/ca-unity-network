@@ -11,6 +11,7 @@ import {
   Flame,
   Heart,
   MessageCircle,
+  Sparkles,
   Target,
   Timer,
   TrendingUp,
