@@ -1,20 +1,18 @@
 import { useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 
 export interface ReminderSettings {
   enabled: boolean;
   briefTime: string; // "HH:mm"
-  sessionReminder: boolean;
-  sessionLeadMinutes: number;
+  revisionEnabled: boolean;
+  revisionTime: string; // "HH:mm"
 }
 
 const KEY = "cun_reminder_settings";
 export const DEFAULT_REMINDERS: ReminderSettings = {
   enabled: false,
   briefTime: "07:30",
-  sessionReminder: true,
-  sessionLeadMinutes: 10,
+  revisionEnabled: true,
+  revisionTime: "18:00",
 };
 
 export function loadReminderSettings(): ReminderSettings {
@@ -42,41 +40,26 @@ function notify(title: string, body: string) {
   } catch {}
 }
 
-const FIRED_KEY = "cun_reminder_fired"; // JSON: { brief: "YYYY-MM-DD", tasks: { [id]: true } }
-
-function getFired(): { brief?: string; tasks: Record<string, boolean> } {
-  if (typeof window === "undefined") return { tasks: {} };
+const FIRED_KEY = "cun_reminder_fired";
+function getFired(): { brief?: string; revision?: string } {
+  if (typeof window === "undefined") return {};
   try {
-    return JSON.parse(localStorage.getItem(FIRED_KEY) ?? '{"tasks":{}}');
+    return JSON.parse(localStorage.getItem(FIRED_KEY) ?? "{}");
   } catch {
-    return { tasks: {} };
+    return {};
   }
 }
-function setFired(v: { brief?: string; tasks: Record<string, boolean> }) {
+function setFired(v: { brief?: string; revision?: string }) {
   if (typeof window === "undefined") return;
   localStorage.setItem(FIRED_KEY, JSON.stringify(v));
 }
 
 /**
- * Local browser-based reminders. Fires while the app is open in a browser tab.
- * For real background push/email delivery a service worker + backend job is needed;
- * this hook covers the in-session reminder use case.
+ * Local in-browser reminders. Fires while the app is open.
+ * Real push/email delivery needs a service worker + backend job — this covers
+ * in-session prompts for Daily Brief and next revision block.
  */
 export function useLocalReminders() {
-  const { data: tasks } = useQuery({
-    queryKey: ["reminder_tasks_today"],
-    queryFn: async () => {
-      const today = new Date().toISOString().slice(0, 10);
-      return (
-        (await supabase
-          .from("tasks")
-          .select("id,title,scheduled_date,scheduled_time,status")
-          .eq("scheduled_date", today)).data ?? []
-      );
-    },
-    refetchInterval: 5 * 60 * 1000,
-  });
-
   useEffect(() => {
     const tick = () => {
       const settings = loadReminderSettings();
@@ -86,32 +69,22 @@ export function useLocalReminders() {
       const today = now.toISOString().slice(0, 10);
       const fired = getFired();
 
-      // Daily brief reminder
       if (hhmm === settings.briefTime && fired.brief !== today) {
         notify("Daily Brief ready", "Open CA Unity Network to see your AI plan for today.");
         setFired({ ...fired, brief: today });
       }
 
-      // Session reminders
-      if (settings.sessionReminder && tasks) {
-        for (const t of tasks as any[]) {
-          if (!t.scheduled_time || t.status === "done") continue;
-          if (fired.tasks[t.id]) continue;
-          const [h, m] = String(t.scheduled_time).slice(0, 5).split(":").map(Number);
-          if (Number.isNaN(h) || Number.isNaN(m)) continue;
-          const target = new Date(now);
-          target.setHours(h, m, 0, 0);
-          const diffMin = Math.round((target.getTime() - now.getTime()) / 60000);
-          if (diffMin <= settings.sessionLeadMinutes && diffMin >= 0) {
-            notify("Next revision session soon", `${t.title} in ${diffMin} min`);
-            fired.tasks[t.id] = true;
-            setFired(fired);
-          }
-        }
+      if (
+        settings.revisionEnabled &&
+        hhmm === settings.revisionTime &&
+        fired.revision !== today
+      ) {
+        notify("Revision session time", "Time for your next revision block. Start a Pomodoro.");
+        setFired({ ...fired, revision: today });
       }
     };
     tick();
     const id = setInterval(tick, 60_000);
     return () => clearInterval(id);
-  }, [tasks]);
+  }, []);
 }
