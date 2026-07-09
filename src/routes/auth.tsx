@@ -194,6 +194,47 @@ function AuthPage() {
             </Link>
           </div>
 
+          {mfaStage ? (
+            <div>
+              <h1 className="font-display text-3xl font-semibold">Two-factor code</h1>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {useRecovery
+                  ? "Enter one of your recovery codes."
+                  : "Open your authenticator app and enter the 6-digit code."}
+              </p>
+              <div className="mt-8 space-y-3">
+                <input
+                  autoFocus
+                  value={mfaCode}
+                  onChange={(e) => setMfaCode(useRecovery ? e.target.value.toUpperCase() : e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  placeholder={useRecovery ? "ABC-DEF" : "123456"}
+                  inputMode={useRecovery ? "text" : "numeric"}
+                  className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-center text-lg font-mono tracking-widest outline-none focus:ring-2 focus:ring-gold"
+                />
+                <button
+                  onClick={verifyMfa}
+                  disabled={loading || (useRecovery ? mfaCode.length < 6 : mfaCode.length !== 6)}
+                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-gold px-4 py-2.5 text-sm font-medium text-primary-foreground disabled:opacity-50"
+                >
+                  {loading ? "Verifying…" : "Verify"}
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => { setUseRecovery(!useRecovery); setMfaCode(""); }}
+                  className="w-full text-center text-xs text-muted-foreground hover:text-foreground"
+                >
+                  {useRecovery ? "Use authenticator app instead" : "Use a recovery code instead"}
+                </button>
+                <button
+                  onClick={async () => { await supabase.auth.signOut(); setMfaStage(null); setMfaCode(""); }}
+                  className="w-full text-center text-xs text-muted-foreground hover:text-foreground"
+                >
+                  Cancel sign-in
+                </button>
+              </div>
+            </div>
+          ) : (
+            <>
           <h1 className="font-display text-3xl font-semibold">
             {mode === "signup" ? "Create your CA Unity Network" : "Welcome back"}
           </h1>
@@ -271,6 +312,8 @@ function AuthPage() {
               </Link>
             )}
           </div>
+            </>
+          )}
         </div>
       </div>
     </div>
