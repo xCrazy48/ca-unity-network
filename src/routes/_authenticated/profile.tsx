@@ -9,12 +9,23 @@ export const Route = createFileRoute("/_authenticated/profile")({
   component: Profile,
 });
 
+const MONTHS = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+
 function Profile() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
-  const [attempt, setAttempt] = useState("may_2026");
+  const [level, setLevel] = useState<string>("inter");
+  const [initialLevel, setInitialLevel] = useState<string>("inter");
+  const [levelChanges, setLevelChanges] = useState<number>(0);
+  const now = new Date();
+  const [examMonth, setExamMonth] = useState<number>(now.getMonth() + 1);
+  const [examYear, setExamYear] = useState<number>(now.getFullYear());
+  const [examDate, setExamDate] = useState<string>("");
   const [group, setGroup] = useState("both");
   const [hours, setHours] = useState(6);
   const [coaching, setCoaching] = useState("");
@@ -25,8 +36,13 @@ function Profile() {
       setEmail(u.user?.email ?? "");
       const { data } = await supabase.from("profiles").select("*").maybeSingle();
       if (data) {
+        const d: any = data;
         setFullName(data.full_name ?? "");
-        if (data.attempt) setAttempt(data.attempt);
+        if (d.level) { setLevel(d.level); setInitialLevel(d.level); }
+        setLevelChanges(Number(d.level_change_count ?? 0));
+        if (d.exam_month) setExamMonth(Number(d.exam_month));
+        if (d.exam_year) setExamYear(Number(d.exam_year));
+        if (d.exam_date) setExamDate(d.exam_date);
         if (data.exam_group) setGroup(data.exam_group);
         if (data.daily_study_hours) setHours(Number(data.daily_study_hours));
         setCoaching(data.coaching_schedule ?? "");
@@ -35,22 +51,36 @@ function Profile() {
     })();
   }, []);
 
+  const levelChanged = level !== initialLevel;
+  const changesLeft = Math.max(0, 3 - levelChanges);
+  const levelLocked = initialLevel !== "" && changesLeft === 0;
+
   const save = async () => {
     setSaving(true);
     const { data: u } = await supabase.auth.getUser();
+    const finalExamDate = examDate || `${examYear}-${String(examMonth).padStart(2, "0")}-01`;
     const { error } = await supabase.from("profiles").upsert({
       id: u.user!.id,
       full_name: fullName,
-      attempt: attempt as never,
+      level: level as never,
+      exam_month: examMonth as never,
+      exam_year: examYear as never,
+      exam_date: finalExamDate as never,
       exam_group: group as never,
       daily_study_hours: hours,
       coaching_schedule: coaching,
       onboarded: true,
-    });
+    } as never);
     setSaving(false);
     if (error) return toast.error(error.message);
+    if (levelChanged) {
+      setInitialLevel(level);
+      setLevelChanges((c) => c + 1);
+    }
     toast.success("Profile saved");
   };
+
+  const yearOptions = Array.from({ length: 6 }, (_, i) => now.getFullYear() + i);
 
   if (loading) return <AppShell><div className="text-muted-foreground">Loading…</div></AppShell>;
 
@@ -72,18 +102,59 @@ function Profile() {
         </Card>
 
         <Card title="Exam">
-          <Row label="Attempt">
+          <Row label={`Level · ${changesLeft} change${changesLeft === 1 ? "" : "s"} left`}>
             <select
-              value={attempt}
-              onChange={(e) => setAttempt(e.target.value)}
-              className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-gold"
+              value={level}
+              disabled={levelLocked}
+              onChange={(e) => setLevel(e.target.value)}
+              className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-gold disabled:opacity-60"
             >
-              <option value="may_2025">May 2025</option>
-              <option value="sep_2025">September 2025</option>
-              <option value="jan_2026">January 2026</option>
-              <option value="may_2026">May 2026</option>
-              <option value="sep_2026">September 2026</option>
+              <option value="inter">CA Intermediate</option>
+              <option value="final">CA Final</option>
             </select>
+            <p className="mt-1.5 text-xs text-muted-foreground">
+              {levelLocked
+                ? "You've used all 3 level changes. This is now locked."
+                : "Your level can only be changed 3 times in your lifetime."}
+            </p>
+          </Row>
+          <Row label="Exam month & year">
+            <div className="grid grid-cols-2 gap-2">
+              <select
+                value={examMonth}
+                onChange={(e) => {
+                  const m = Number(e.target.value);
+                  setExamMonth(m);
+                  setExamDate(`${examYear}-${String(m).padStart(2, "0")}-01`);
+                }}
+                className="rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-gold"
+              >
+                {MONTHS.map((m, i) => (
+                  <option key={m} value={i + 1}>{m}</option>
+                ))}
+              </select>
+              <select
+                value={examYear}
+                onChange={(e) => {
+                  const y = Number(e.target.value);
+                  setExamYear(y);
+                  setExamDate(`${y}-${String(examMonth).padStart(2, "0")}-01`);
+                }}
+                className="rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-gold"
+              >
+                {yearOptions.map((y) => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
+            </div>
+          </Row>
+          <Row label="Exam date (defaults to 1st of exam month)">
+            <input
+              type="date"
+              value={examDate || `${examYear}-${String(examMonth).padStart(2, "0")}-01`}
+              onChange={(e) => setExamDate(e.target.value)}
+              className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-gold"
+            />
           </Row>
           <Row label="Group">
             <select
