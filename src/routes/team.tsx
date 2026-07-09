@@ -29,6 +29,7 @@ type Member = {
   name: string;
   role: string;
   initials: string;
+  photo?: string;
   bio: string;
   tag: string;
 };
@@ -38,17 +39,20 @@ const founders: Member[] = [
     name: "Ronil Dodhia",
     role: "Co-founder · Product & Mentoring",
     initials: "RD",
+    photo: ronilAsset.url,
     tag: "Ideated the platform",
     bio: "CA aspirant who kept sketching on the back of mock answer sheets until this platform existed. Handles product direction, 1:1 mentoring on WhatsApp, and most of the community's late-night doubts.",
   },
   {
     name: "Rushil Bauva",
-    role: "Co-founder · Community",
+    role: "Co-founder · Community & Marketing",
     initials: "RB",
-    tag: "Co-created the group",
-    bio: "The other half of the 8th March 2025 WhatsApp group. Runs community, moderation, and keeps the network's culture warm, honest, and student-first.",
+    photo: rushilAsset.url,
+    tag: "The people's guy",
+    bio: "The people's guy — and the marketing brain behind the network. Runs community, moderation, partnerships, and outreach, and keeps the network's culture warm, honest, and student-first.",
   },
 ];
+
 
 const contributors: Member[] = [
   {
