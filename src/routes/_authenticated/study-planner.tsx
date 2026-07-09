@@ -293,6 +293,18 @@ function PlanView({ plan }: { plan: {
     0,
     Math.ceil((new Date(plan.exam_date).getTime() - Date.now()) / 86400000),
   );
+  const syncFn = useServerFn(syncPlanToTasks);
+  const qc = useQueryClient();
+  const sync = useMutation({
+    mutationFn: (days: number) => syncFn({ data: { plan_id: plan.id, days } }),
+    onSuccess: (res) => {
+      qc.invalidateQueries({ queryKey: ["tasks"] });
+      toast.success(`Added ${res.inserted} tasks across ${res.days} days`, {
+        action: { label: "Open Planner", onClick: () => { window.location.href = "/planner"; } },
+      });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
 
   return (
     <Card>
@@ -311,6 +323,17 @@ function PlanView({ plan }: { plan: {
               <span className="capitalize">{plan.preparation_level}</span>
             </CardDescription>
           </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => sync.mutate(1)} disabled={sync.isPending} className="gap-1.5">
+              <ListChecks className="h-4 w-4" /> Sync today
+            </Button>
+            <Button size="sm" onClick={() => sync.mutate(7)} disabled={sync.isPending} className="gap-1.5">
+              <ListChecks className="h-4 w-4" /> Sync 7 days → Planner
+            </Button>
+            <Button asChild variant="ghost" size="sm">
+              <Link to="/planner">Open Planner</Link>
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
@@ -320,6 +343,7 @@ function PlanView({ plan }: { plan: {
             <p className="text-sm leading-relaxed">{plan.strategy}</p>
           </div>
         )}
+
 
         <Tabs defaultValue="daily">
           <TabsList>
