@@ -165,10 +165,9 @@ function PomodoroPage() {
   return (
     <AppShell>
       <PageHeader
-        icon={Timer}
         eyebrow="Deep work"
         title="Pomodoro Timer"
-        subtitle="Fully customisable focus + break intervals. Your settings save automatically."
+        description="Fully customisable focus + break intervals. Your settings save automatically."
       />
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[1.2fr_1fr]">
