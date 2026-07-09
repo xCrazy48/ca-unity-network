@@ -262,6 +262,10 @@ function Dashboard() {
         <QuickAction icon={Target} title="Update chapter progress" body="Keep the readiness score honest." to="/chapters" />
         <QuickAction icon={Brain} title="Generate revision plan" body="7-day, 3-day, or 1-day AI plan per paper." to="/ai" />
       </section>
+
+      <div className="mt-8">
+        <MentoringCard />
+      </div>
     </AppShell>
   );
 }
