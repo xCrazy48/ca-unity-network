@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 
 import { AppShell } from "@/components/app-shell";
+import { QuoteDialog } from "@/components/quote-dialog";
+import { MentoringCard } from "@/components/mentoring-card";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
