@@ -36,6 +36,8 @@ export const Route = createFileRoute("/")({
 });
 
 const features = [
+  { icon: Sparkles, title: "AI Mock Analyzer · Free", body: "Upload a scorecard, PDF, or screenshot. AI extracts every score, accuracy, weak area, and builds your readiness dashboard. Zero cost." },
+  { icon: Timer, title: "Focus Mode Pomodoro", body: "Customisable focus + break timers. Focus Mode ends the session the moment you switch tabs — only clean deep work counts toward your streak." },
   { icon: Brain, title: "AI Revision Engine", body: "Rebuilds your week when you fall behind. Diagnoses weak chapters from mock scores and converts marks into action items." },
   { icon: CalendarClock, title: "Dynamic Exam Calendar", body: "Group 1, Group 2, or Both. Editable 3-day or 6-day schedule with live countdown to every paper." },
   { icon: Target, title: "ICAI-Aware Progress", body: "Every chapter tagged with official ICAI weightage — so the plan chases marks, not busywork." },
