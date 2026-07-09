@@ -44,6 +44,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  useLocalReminders();
 
   const { data: profile } = useQuery({
     queryKey: ["profile"],
