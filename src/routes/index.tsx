@@ -24,11 +24,11 @@ import { UnityLogo } from "@/components/logo";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "CA Unity Network — Your AI Command Center for CA Intermediate" },
+      { title: "CA Unity Network — Built by a CA student, for CA students" },
       {
         name: "description",
         content:
-          "AI-planned study, ICAI-aware chapter tracking, mock analytics, mistake book, and a rescue mode for the final stretch. Built for CA Inter aspirants.",
+          "AI-planned study, ICAI-aware chapter tracking, mock analytics, mistake book, and a rescue mode for the final stretch. Built by a CA student, for CA students.",
       },
     ],
   }),
