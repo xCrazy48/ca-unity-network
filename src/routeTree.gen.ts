@@ -30,6 +30,7 @@ import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authentic
 import { Route as AuthenticatedMtpRouteImport } from './routes/_authenticated/mtp'
 import { Route as AuthenticatedMocksRouteImport } from './routes/_authenticated/mocks'
 import { Route as AuthenticatedMistakesRouteImport } from './routes/_authenticated/mistakes'
+import { Route as AuthenticatedMentoringRouteImport } from './routes/_authenticated/mentoring'
 import { Route as AuthenticatedFormulasRouteImport } from './routes/_authenticated/formulas'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedChaptersRouteImport } from './routes/_authenticated/chapters'
@@ -141,6 +142,11 @@ const AuthenticatedMistakesRoute = AuthenticatedMistakesRouteImport.update({
   path: '/mistakes',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedMentoringRoute = AuthenticatedMentoringRouteImport.update({
+  id: '/mentoring',
+  path: '/mentoring',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedFormulasRoute = AuthenticatedFormulasRouteImport.update({
   id: '/formulas',
   path: '/formulas',
@@ -187,6 +193,7 @@ export interface FileRoutesByFullPath {
   '/chapters': typeof AuthenticatedChaptersRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/formulas': typeof AuthenticatedFormulasRoute
+  '/mentoring': typeof AuthenticatedMentoringRoute
   '/mistakes': typeof AuthenticatedMistakesRoute
   '/mocks': typeof AuthenticatedMocksRoute
   '/mtp': typeof AuthenticatedMtpRoute
@@ -215,6 +222,7 @@ export interface FileRoutesByTo {
   '/chapters': typeof AuthenticatedChaptersRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/formulas': typeof AuthenticatedFormulasRoute
+  '/mentoring': typeof AuthenticatedMentoringRoute
   '/mistakes': typeof AuthenticatedMistakesRoute
   '/mocks': typeof AuthenticatedMocksRoute
   '/mtp': typeof AuthenticatedMtpRoute
@@ -245,6 +253,7 @@ export interface FileRoutesById {
   '/_authenticated/chapters': typeof AuthenticatedChaptersRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/formulas': typeof AuthenticatedFormulasRoute
+  '/_authenticated/mentoring': typeof AuthenticatedMentoringRoute
   '/_authenticated/mistakes': typeof AuthenticatedMistakesRoute
   '/_authenticated/mocks': typeof AuthenticatedMocksRoute
   '/_authenticated/mtp': typeof AuthenticatedMtpRoute
@@ -275,6 +284,7 @@ export interface FileRouteTypes {
     | '/chapters'
     | '/dashboard'
     | '/formulas'
+    | '/mentoring'
     | '/mistakes'
     | '/mocks'
     | '/mtp'
@@ -303,6 +313,7 @@ export interface FileRouteTypes {
     | '/chapters'
     | '/dashboard'
     | '/formulas'
+    | '/mentoring'
     | '/mistakes'
     | '/mocks'
     | '/mtp'
@@ -332,6 +343,7 @@ export interface FileRouteTypes {
     | '/_authenticated/chapters'
     | '/_authenticated/dashboard'
     | '/_authenticated/formulas'
+    | '/_authenticated/mentoring'
     | '/_authenticated/mistakes'
     | '/_authenticated/mocks'
     | '/_authenticated/mtp'
@@ -507,6 +519,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMistakesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/mentoring': {
+      id: '/_authenticated/mentoring'
+      path: '/mentoring'
+      fullPath: '/mentoring'
+      preLoaderRoute: typeof AuthenticatedMentoringRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/formulas': {
       id: '/_authenticated/formulas'
       path: '/formulas'
@@ -559,6 +578,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedChaptersRoute: typeof AuthenticatedChaptersRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedFormulasRoute: typeof AuthenticatedFormulasRoute
+  AuthenticatedMentoringRoute: typeof AuthenticatedMentoringRoute
   AuthenticatedMistakesRoute: typeof AuthenticatedMistakesRoute
   AuthenticatedMocksRoute: typeof AuthenticatedMocksRoute
   AuthenticatedMtpRoute: typeof AuthenticatedMtpRoute
@@ -580,6 +600,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedChaptersRoute: AuthenticatedChaptersRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedFormulasRoute: AuthenticatedFormulasRoute,
+  AuthenticatedMentoringRoute: AuthenticatedMentoringRoute,
   AuthenticatedMistakesRoute: AuthenticatedMistakesRoute,
   AuthenticatedMocksRoute: AuthenticatedMocksRoute,
   AuthenticatedMtpRoute: AuthenticatedMtpRoute,
@@ -611,13 +632,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

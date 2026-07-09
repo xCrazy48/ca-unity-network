@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/page-header";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+import { useUserPapers } from "@/hooks/use-user-papers";
 
 export const Route = createFileRoute("/_authenticated/papers")({
   head: () => ({
