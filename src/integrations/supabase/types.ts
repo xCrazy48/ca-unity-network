@@ -541,18 +541,21 @@ export type Database = {
       papers: {
         Row: {
           code: string
+          level: string
           name: string
           paper_group: Database["public"]["Enums"]["exam_group"]
           sort_order: number
         }
         Insert: {
           code: string
+          level?: string
           name: string
           paper_group: Database["public"]["Enums"]["exam_group"]
           sort_order: number
         }
         Update: {
           code?: string
+          level?: string
           name?: string
           paper_group?: Database["public"]["Enums"]["exam_group"]
           sort_order?: number

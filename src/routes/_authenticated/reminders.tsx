@@ -139,7 +139,7 @@ function RemindersPage() {
           Need someone to hold you accountable?
         </h3>
         <p className="mt-2 text-sm text-muted-foreground">
-          Book 1:1 mentoring with Ronil Dodhia on WhatsApp — +91 88288 28184.
+          Book 1:1 mentoring with Team Unity on WhatsApp — 8828828184.
         </p>
         <a
           href={WHATSAPP_LINK}

@@ -80,7 +80,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content:
           "AI-planned study, ICAI-aware chapter tracking, mock analytics, mistake book, and a rescue mode for the final stretch. Built for CA Inter aspirants.",
       },
-      { name: "author", content: "Ronil Dodhia" },
+      { name: "author", content: "Team Unity" },
       { name: "theme-color", content: "#151820" },
       { property: "og:title", content: "CA Unity Network — Your AI Command Center for CA Intermediate" },
       {
@@ -97,13 +97,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     ],
     links: [
       { rel: "stylesheet", href: appCss },
+      { rel: "icon", type: "image/jpeg", href: "/__l5e/assets-v1/96a5ec02-bd58-47f4-8243-faf2d6f0d902/unity-logo.jpg" },
+      { rel: "apple-touch-icon", href: "/__l5e/assets-v1/96a5ec02-bd58-47f4-8243-faf2d6f0d902/unity-logo.jpg" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap",
       },
     ],
+
   }),
   shellComponent: RootShell,
   component: RootComponent,
