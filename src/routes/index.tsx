@@ -109,7 +109,7 @@ function Landing() {
               Built by a CA student, for CA students
             </div>
             <h1 className="mt-6 font-display text-5xl font-semibold leading-[1.05] tracking-tight md:text-7xl">
-              The AI <span className="text-gold">command center</span> for your CA Inter attempt.
+              The AI <span className="text-gold">command center</span> for your CA Inter/Final attempt.
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
               Stop guessing what to study. CA Unity Network turns the ICAI syllabus, your mocks, and the
