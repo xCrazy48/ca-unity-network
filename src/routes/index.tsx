@@ -9,11 +9,16 @@ import {
   Compass,
   FileText,
   Flame,
+  Heart,
+  MessageCircle,
   Sparkles,
   Target,
   Timer,
   TrendingUp,
+  Users,
 } from "lucide-react";
+import { ThemeToggle } from "@/components/theme-toggle";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
