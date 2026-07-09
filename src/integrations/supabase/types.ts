@@ -371,9 +371,14 @@ export type Database = {
           coaching_schedule: string | null
           created_at: string
           daily_study_hours: number | null
+          exam_date: string | null
           exam_group: Database["public"]["Enums"]["exam_group"] | null
+          exam_month: number | null
+          exam_year: number | null
           full_name: string | null
           id: string
+          level: Database["public"]["Enums"]["exam_level"] | null
+          level_change_count: number
           onboarded: boolean
           updated_at: string
         }
@@ -383,9 +388,14 @@ export type Database = {
           coaching_schedule?: string | null
           created_at?: string
           daily_study_hours?: number | null
+          exam_date?: string | null
           exam_group?: Database["public"]["Enums"]["exam_group"] | null
+          exam_month?: number | null
+          exam_year?: number | null
           full_name?: string | null
           id: string
+          level?: Database["public"]["Enums"]["exam_level"] | null
+          level_change_count?: number
           onboarded?: boolean
           updated_at?: string
         }
@@ -395,9 +405,14 @@ export type Database = {
           coaching_schedule?: string | null
           created_at?: string
           daily_study_hours?: number | null
+          exam_date?: string | null
           exam_group?: Database["public"]["Enums"]["exam_group"] | null
+          exam_month?: number | null
+          exam_year?: number | null
           full_name?: string | null
           id?: string
+          level?: Database["public"]["Enums"]["exam_level"] | null
+          level_change_count?: number
           onboarded?: boolean
           updated_at?: string
         }
@@ -566,6 +581,7 @@ export type Database = {
         | "may_2026"
         | "sep_2026"
       exam_group: "group_1" | "group_2" | "both"
+      exam_level: "inter" | "final"
       mistake_source:
         | "module"
         | "rtp"
@@ -713,6 +729,7 @@ export const Constants = {
         "sep_2026",
       ],
       exam_group: ["group_1", "group_2", "both"],
+      exam_level: ["inter", "final"],
       mistake_source: [
         "module",
         "rtp",
