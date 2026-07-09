@@ -1,5 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Sparkles, Users, MessageCircle, Heart, Rocket } from "lucide-react";
+import { ArrowRight, Users, MessageCircle, Heart } from "lucide-react";
+import { UnityLogo } from "@/components/logo";
+
 import { ThemeToggle } from "@/components/theme-toggle";
 
 export const Route = createFileRoute("/about")({
@@ -165,11 +167,10 @@ export function SiteHeader() {
     <header className="sticky top-0 z-40 border-b border-border/50 bg-background/70 backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
         <Link to="/" className="flex items-center gap-2">
-          <div className="grid h-8 w-8 place-items-center rounded-lg bg-gold text-primary-foreground shadow-glow">
-            <Sparkles className="h-4 w-4" strokeWidth={2.5} />
-          </div>
+          <UnityLogo size="sm" />
           <span className="font-display text-xl font-semibold tracking-tight">CA Unity Network</span>
         </Link>
+
         <nav className="hidden items-center gap-8 md:flex">
           <Link to="/about" className="text-sm text-muted-foreground hover:text-foreground">About</Link>
           <Link to="/team" className="text-sm text-muted-foreground hover:text-foreground">Team</Link>

@@ -3,7 +3,9 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { z } from "zod";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight } from "lucide-react";
+import { UnityLogo } from "@/components/logo";
+
 
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
@@ -161,11 +163,10 @@ function AuthPage() {
       <div className="hidden lg:block relative bg-hero grain border-r border-border">
         <div className="flex h-full flex-col justify-between p-12">
           <Link to="/" className="flex items-center gap-2">
-            <div className="grid h-8 w-8 place-items-center rounded-lg bg-gold text-primary-foreground shadow-glow">
-              <Sparkles className="h-4 w-4" strokeWidth={2.5} />
-            </div>
+            <UnityLogo size="sm" />
             <span className="font-display text-xl font-semibold">CA Unity Network</span>
           </Link>
+
           <div>
             <h2 className="font-display text-4xl font-semibold leading-tight">
               Your attempt, on rails.
@@ -187,12 +188,11 @@ function AuthPage() {
         <div className="w-full max-w-sm">
           <div className="mb-8 lg:hidden">
             <Link to="/" className="flex items-center gap-2">
-              <div className="grid h-8 w-8 place-items-center rounded-lg bg-gold text-primary-foreground">
-                <Sparkles className="h-4 w-4" strokeWidth={2.5} />
-              </div>
+              <UnityLogo size="sm" />
               <span className="font-display text-xl font-semibold">CA Unity Network</span>
             </Link>
           </div>
+
 
           {mfaStage ? (
             <div>
