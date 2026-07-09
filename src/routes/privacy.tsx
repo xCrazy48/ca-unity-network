@@ -161,7 +161,7 @@ function PrivacyPage() {
           <Block title="10. Contact us">
             <p>
               Questions about this policy? Message us on WhatsApp at{" "}
-              <a href="https://wa.me/918828828184" className="text-gold hover:underline">
+              <a href="https://wa.me/918828828184" target="_blank" rel="noreferrer" className="text-gold hover:underline">
                 +91 88288 28184
               </a>{" "}
               or reach out through the community group.
