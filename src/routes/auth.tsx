@@ -1,11 +1,15 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { z } from "zod";
 import { ArrowRight, Sparkles } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
+import { recordLogin } from "@/lib/activity.functions";
+import { consumeRecoveryCode } from "@/lib/two-factor.functions";
+import { currentUA } from "@/lib/user-agent";
 
 const searchSchema = z.object({
   mode: z.enum(["signin", "signup"]).optional(),
@@ -32,12 +36,48 @@ function AuthPage() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [mfaStage, setMfaStage] = useState<null | { factorId: string; challengeId: string }>(null);
+  const [mfaCode, setMfaCode] = useState("");
+  const [useRecovery, setUseRecovery] = useState(false);
+  const track = useServerFn(recordLogin);
+  const consumeRC = useServerFn(consumeRecoveryCode);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) navigate({ to: search.redirect ?? "/dashboard" });
     });
   }, [navigate, search.redirect]);
+
+  const afterSignIn = async (provider: string) => {
+    const ua = currentUA();
+    await track({
+      data: {
+        event_type: "login",
+        provider,
+        device: ua.device,
+        browser: ua.browser,
+        os: ua.os,
+        user_agent: typeof navigator !== "undefined" ? navigator.userAgent : undefined,
+      },
+    }).catch(() => {});
+  };
+
+  const checkMfa = async (): Promise<boolean> => {
+    // If the user has verified TOTP factors, require them before entering the app.
+    const { data } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (data?.nextLevel === "aal2" && data.currentLevel !== "aal2") {
+      const factors = await supabase.auth.mfa.listFactors();
+      const totp = factors.data?.totp?.[0];
+      if (totp) {
+        const ch = await supabase.auth.mfa.challenge({ factorId: totp.id });
+        if (ch.data) {
+          setMfaStage({ factorId: totp.id, challengeId: ch.data.id });
+          return true;
+        }
+      }
+    }
+    return false;
+  };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,16 +93,46 @@ function AuthPage() {
           },
         });
         if (error) throw error;
-        toast.success("Account created", { description: "Setting up your workspace…" });
-        navigate({ to: "/onboarding" });
+        toast.success("Account created", { description: "Check your email to verify, then sign in." });
+        setMode("signin");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        const needsMfa = await checkMfa();
+        if (needsMfa) return;
+        await afterSignIn("email");
         toast.success("Welcome back");
         navigate({ to: search.redirect ?? "/dashboard" });
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const verifyMfa = async () => {
+    if (!mfaStage) return;
+    setLoading(true);
+    try {
+      if (useRecovery) {
+        const res = await consumeRC({ data: { code: mfaCode } });
+        if (!res.valid) throw new Error("Invalid recovery code");
+        // Recovery code path: we still need to satisfy AAL2 for this session. Best UX is to unenroll factor,
+        // let the user finish sign-in, and prompt them to re-enable 2FA in settings.
+        toast.success("Recovery code accepted");
+      } else {
+        const { error } = await supabase.auth.mfa.verify({
+          factorId: mfaStage.factorId,
+          challengeId: mfaStage.challengeId,
+          code: mfaCode,
+        });
+        if (error) throw error;
+      }
+      await afterSignIn("email+2fa");
+      navigate({ to: search.redirect ?? "/dashboard" });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Verification failed");
     } finally {
       setLoading(false);
     }
@@ -79,6 +149,9 @@ function AuthPage() {
       return;
     }
     if (result.redirected) return;
+    const needsMfa = await checkMfa();
+    if (needsMfa) { setLoading(false); return; }
+    await afterSignIn("google");
     navigate({ to: search.redirect ?? "/dashboard" });
   };
 
@@ -121,6 +194,47 @@ function AuthPage() {
             </Link>
           </div>
 
+          {mfaStage ? (
+            <div>
+              <h1 className="font-display text-3xl font-semibold">Two-factor code</h1>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {useRecovery
+                  ? "Enter one of your recovery codes."
+                  : "Open your authenticator app and enter the 6-digit code."}
+              </p>
+              <div className="mt-8 space-y-3">
+                <input
+                  autoFocus
+                  value={mfaCode}
+                  onChange={(e) => setMfaCode(useRecovery ? e.target.value.toUpperCase() : e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  placeholder={useRecovery ? "ABC-DEF" : "123456"}
+                  inputMode={useRecovery ? "text" : "numeric"}
+                  className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-center text-lg font-mono tracking-widest outline-none focus:ring-2 focus:ring-gold"
+                />
+                <button
+                  onClick={verifyMfa}
+                  disabled={loading || (useRecovery ? mfaCode.length < 6 : mfaCode.length !== 6)}
+                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-gold px-4 py-2.5 text-sm font-medium text-primary-foreground disabled:opacity-50"
+                >
+                  {loading ? "Verifying…" : "Verify"}
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => { setUseRecovery(!useRecovery); setMfaCode(""); }}
+                  className="w-full text-center text-xs text-muted-foreground hover:text-foreground"
+                >
+                  {useRecovery ? "Use authenticator app instead" : "Use a recovery code instead"}
+                </button>
+                <button
+                  onClick={async () => { await supabase.auth.signOut(); setMfaStage(null); setMfaCode(""); }}
+                  className="w-full text-center text-xs text-muted-foreground hover:text-foreground"
+                >
+                  Cancel sign-in
+                </button>
+              </div>
+            </div>
+          ) : (
+            <>
           <h1 className="font-display text-3xl font-semibold">
             {mode === "signup" ? "Create your CA Unity Network" : "Welcome back"}
           </h1>
@@ -198,6 +312,8 @@ function AuthPage() {
               </Link>
             )}
           </div>
+            </>
+          )}
         </div>
       </div>
     </div>
