@@ -144,14 +144,23 @@ function MemberCard({ m }: { m: Member }) {
   return (
     <div className="group rounded-2xl border border-border bg-card p-6 transition hover:border-gold/40 hover:shadow-elegant">
       <div className="flex items-center gap-4">
-        <div className="grid h-14 w-14 place-items-center rounded-2xl bg-gold font-display text-lg font-semibold text-primary-foreground shadow-glow">
-          {m.initials}
-        </div>
+        {m.photo ? (
+          <img
+            src={m.photo}
+            alt={m.name}
+            className="h-16 w-16 rounded-2xl object-cover shadow-glow ring-2 ring-gold/40"
+          />
+        ) : (
+          <div className="grid h-16 w-16 place-items-center rounded-2xl bg-gold font-display text-lg font-semibold text-primary-foreground shadow-glow">
+            {m.initials}
+          </div>
+        )}
         <div>
           <h3 className="font-display text-xl font-semibold">{m.name}</h3>
           <p className="text-sm text-muted-foreground">{m.role}</p>
         </div>
       </div>
+
       <p className="mt-4 text-sm leading-relaxed text-muted-foreground">{m.bio}</p>
       <div className="mt-4 inline-flex items-center rounded-full bg-accent px-3 py-1 text-[11px] uppercase tracking-wider text-gold">
         {m.tag}
