@@ -195,6 +195,45 @@ export type Database = {
         }
         Relationships: []
       }
+      focus_sessions: {
+        Row: {
+          actual_seconds: number
+          created_at: string
+          ended_at: string
+          focus_mode: boolean
+          id: string
+          interrupted: boolean
+          phase: string
+          planned_minutes: number
+          started_at: string
+          user_id: string
+        }
+        Insert: {
+          actual_seconds: number
+          created_at?: string
+          ended_at?: string
+          focus_mode?: boolean
+          id?: string
+          interrupted?: boolean
+          phase?: string
+          planned_minutes: number
+          started_at?: string
+          user_id: string
+        }
+        Update: {
+          actual_seconds?: number
+          created_at?: string
+          ended_at?: string
+          focus_mode?: boolean
+          id?: string
+          interrupted?: boolean
+          phase?: string
+          planned_minutes?: number
+          started_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       formulas: {
         Row: {
           body: string
@@ -365,6 +404,93 @@ export type Database = {
             referencedColumns: ["code"]
           },
         ]
+      }
+      mock_analyses: {
+        Row: {
+          accuracy: number | null
+          attempted: number | null
+          chapter_performance: Json | null
+          correct: number | null
+          created_at: string
+          file_mime: string | null
+          file_path: string | null
+          id: string
+          improvement_suggestions: Json | null
+          incorrect: number | null
+          max_score: number | null
+          overall_score: number | null
+          paper_code: string | null
+          raw_ai_response: Json | null
+          readiness_score: number | null
+          section_scores: Json | null
+          source: string
+          status: string
+          strong_areas: Json | null
+          subject_scores: Json | null
+          test_name: string | null
+          time_taken_minutes: number | null
+          unattempted: number | null
+          updated_at: string
+          user_id: string
+          weak_areas: Json | null
+        }
+        Insert: {
+          accuracy?: number | null
+          attempted?: number | null
+          chapter_performance?: Json | null
+          correct?: number | null
+          created_at?: string
+          file_mime?: string | null
+          file_path?: string | null
+          id?: string
+          improvement_suggestions?: Json | null
+          incorrect?: number | null
+          max_score?: number | null
+          overall_score?: number | null
+          paper_code?: string | null
+          raw_ai_response?: Json | null
+          readiness_score?: number | null
+          section_scores?: Json | null
+          source: string
+          status?: string
+          strong_areas?: Json | null
+          subject_scores?: Json | null
+          test_name?: string | null
+          time_taken_minutes?: number | null
+          unattempted?: number | null
+          updated_at?: string
+          user_id: string
+          weak_areas?: Json | null
+        }
+        Update: {
+          accuracy?: number | null
+          attempted?: number | null
+          chapter_performance?: Json | null
+          correct?: number | null
+          created_at?: string
+          file_mime?: string | null
+          file_path?: string | null
+          id?: string
+          improvement_suggestions?: Json | null
+          incorrect?: number | null
+          max_score?: number | null
+          overall_score?: number | null
+          paper_code?: string | null
+          raw_ai_response?: Json | null
+          readiness_score?: number | null
+          section_scores?: Json | null
+          source?: string
+          status?: string
+          strong_areas?: Json | null
+          subject_scores?: Json | null
+          test_name?: string | null
+          time_taken_minutes?: number | null
+          unattempted?: number | null
+          updated_at?: string
+          user_id?: string
+          weak_areas?: Json | null
+        }
+        Relationships: []
       }
       mock_tests: {
         Row: {
@@ -955,11 +1081,49 @@ export type Database = {
         }
         Relationships: []
       }
+      user_xp: {
+        Row: {
+          current_streak: number
+          last_active_date: string | null
+          level: number
+          longest_streak: number
+          updated_at: string
+          user_id: string
+          xp: number
+        }
+        Insert: {
+          current_streak?: number
+          last_active_date?: string | null
+          level?: number
+          longest_streak?: number
+          updated_at?: string
+          user_id: string
+          xp?: number
+        }
+        Update: {
+          current_streak?: number
+          last_active_date?: string | null
+          level?: number
+          longest_streak?: number
+          updated_at?: string
+          user_id?: string
+          xp?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      award_xp: {
+        Args: { _amount: number; _user_id: string }
+        Returns: {
+          new_level: number
+          new_xp: number
+          streak: number
+        }[]
+      }
       gen_referral_code: { Args: never; Returns: string }
       get_admin_stats: { Args: never; Returns: Json }
     }
