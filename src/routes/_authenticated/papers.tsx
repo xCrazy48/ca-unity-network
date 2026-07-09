@@ -21,11 +21,7 @@ export const Route = createFileRoute("/_authenticated/papers")({
 });
 
 function PapersPage() {
-  const { data: papers } = useQuery({
-    queryKey: ["papers"],
-    queryFn: async () =>
-      (await supabase.from("papers").select("*").order("sort_order")).data ?? [],
-  });
+  const { data: papers } = useUserPapers();
 
   const { data: chapters } = useQuery({
     queryKey: ["chapters"],
