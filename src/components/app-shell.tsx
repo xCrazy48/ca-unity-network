@@ -14,6 +14,7 @@ import {
   LineChart,
   ListChecks,
   LogOut,
+  MessageCircle,
   Settings,
 
   Target,
