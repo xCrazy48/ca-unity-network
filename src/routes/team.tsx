@@ -1,6 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, Heart, MessageCircle, Users } from "lucide-react";
 import { SiteHeader, SiteFooter } from "./about";
+import ronilAsset from "@/assets/ronil.jpg.asset.json";
+import rushilAsset from "@/assets/rushil.jpg.asset.json";
+
 
 export const Route = createFileRoute("/team")({
   head: () => ({
@@ -26,6 +29,7 @@ type Member = {
   name: string;
   role: string;
   initials: string;
+  photo?: string;
   bio: string;
   tag: string;
 };
@@ -35,17 +39,20 @@ const founders: Member[] = [
     name: "Ronil Dodhia",
     role: "Co-founder · Product & Mentoring",
     initials: "RD",
+    photo: ronilAsset.url,
     tag: "Ideated the platform",
     bio: "CA aspirant who kept sketching on the back of mock answer sheets until this platform existed. Handles product direction, 1:1 mentoring on WhatsApp, and most of the community's late-night doubts.",
   },
   {
     name: "Rushil Bauva",
-    role: "Co-founder · Community",
+    role: "Co-founder · Community & Marketing",
     initials: "RB",
-    tag: "Co-created the group",
-    bio: "The other half of the 8th March 2025 WhatsApp group. Runs community, moderation, and keeps the network's culture warm, honest, and student-first.",
+    photo: rushilAsset.url,
+    tag: "The people's guy",
+    bio: "The people's guy — and the marketing brain behind the network. Runs community, moderation, partnerships, and outreach, and keeps the network's culture warm, honest, and student-first.",
   },
 ];
+
 
 const contributors: Member[] = [
   {
@@ -137,14 +144,23 @@ function MemberCard({ m }: { m: Member }) {
   return (
     <div className="group rounded-2xl border border-border bg-card p-6 transition hover:border-gold/40 hover:shadow-elegant">
       <div className="flex items-center gap-4">
-        <div className="grid h-14 w-14 place-items-center rounded-2xl bg-gold font-display text-lg font-semibold text-primary-foreground shadow-glow">
-          {m.initials}
-        </div>
+        {m.photo ? (
+          <img
+            src={m.photo}
+            alt={m.name}
+            className="h-16 w-16 rounded-2xl object-cover shadow-glow ring-2 ring-gold/40"
+          />
+        ) : (
+          <div className="grid h-16 w-16 place-items-center rounded-2xl bg-gold font-display text-lg font-semibold text-primary-foreground shadow-glow">
+            {m.initials}
+          </div>
+        )}
         <div>
           <h3 className="font-display text-xl font-semibold">{m.name}</h3>
           <p className="text-sm text-muted-foreground">{m.role}</p>
         </div>
       </div>
+
       <p className="mt-4 text-sm leading-relaxed text-muted-foreground">{m.bio}</p>
       <div className="mt-4 inline-flex items-center rounded-full bg-accent px-3 py-1 text-[11px] uppercase tracking-wider text-gold">
         {m.tag}
