@@ -126,7 +126,7 @@ export const analyzeMockFromUpload = createServerFn({ method: "POST" })
         weak_areas: parsed.weak_areas,
         improvement_suggestions: parsed.improvement_suggestions,
         readiness_score: readiness,
-        raw_ai_response: parsed as unknown as Record<string, unknown>,
+        raw_ai_response: parsed as never,
       })
       .select()
       .single();
