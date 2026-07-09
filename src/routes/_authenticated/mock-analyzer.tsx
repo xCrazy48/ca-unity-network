@@ -211,7 +211,7 @@ function UploadPanel({
       <div className="mt-6 rounded-xl border-2 border-dashed border-border/70 bg-background/40 p-8 text-center">
         <FileText className="mx-auto h-8 w-8 text-muted-foreground" />
         <p className="mt-3 text-sm">
-          Upload a scorecard PDF, screenshot, or scanned result. AI extracts scores, accuracy, weak areas, and readiness.
+          Upload a q paper, suggested answers, and your answer sheet. AI extracts scores, accuracy, weak areas, and readiness.
         </p>
         <Input
           ref={inputRef}
