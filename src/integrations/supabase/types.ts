@@ -958,6 +958,7 @@ export type Database = {
     }
     Functions: {
       gen_referral_code: { Args: never; Returns: string }
+      get_admin_stats: { Args: never; Returns: Json }
     }
     Enums: {
       app_role: "admin" | "user"
