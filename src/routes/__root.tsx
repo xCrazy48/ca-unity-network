@@ -74,26 +74,29 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "CA Unity Network — The AI Exam OS for CA Intermediate" },
+      { title: "CA Unity Network — Your AI Command Center for CA Intermediate" },
       {
         name: "description",
         content:
-          "CA Unity Network is the AI-powered command center for CA Inter aspirants. Track chapters, mocks, MTPs, RTPs & PYQs, and let AI plan every day up to your exam.",
+          "AI-planned study, ICAI-aware chapter tracking, mock analytics, mistake book, and a rescue mode for the final stretch. Built for CA Inter aspirants.",
       },
-      { name: "author", content: "Team Unity" },
+      { name: "author", content: "Ronil Dodhia" },
       { name: "theme-color", content: "#151820" },
-      { property: "og:title", content: "CA Unity Network — The AI Exam OS for CA Intermediate" },
+      { property: "og:title", content: "CA Unity Network — Your AI Command Center for CA Intermediate" },
       {
         property: "og:description",
         content:
-          "AI-planned study, ICAI-aware tracking, and a rescue mode for crunch time. Built for CA Inter.",
+          "AI-planned study, ICAI-aware chapter tracking, mock analytics, mistake book, and a rescue mode for the final stretch. Built for CA Inter aspirants.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "CA Unity Network — Your AI Command Center for CA Intermediate" },
+      { name: "twitter:description", content: "AI-planned study, ICAI-aware chapter tracking, mock analytics, mistake book, and a rescue mode for the final stretch. Built for CA Inter aspirants." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/5f9260e4-3973-4241-bcfa-e2a1404b94df/id-preview-5401f36a--7773eeab-3fff-44b6-9ab3-ed3b394ba686.lovable.app-1783580673352.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/5f9260e4-3973-4241-bcfa-e2a1404b94df/id-preview-5401f36a--7773eeab-3fff-44b6-9ab3-ed3b394ba686.lovable.app-1783580673352.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
@@ -113,13 +116,7 @@ function RootShell({ children }: { children: ReactNode }) {
     <html lang="en" className="dark">
       <head>
         <HeadContent />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('cun-theme');if(!t){t=window.matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';}var r=document.documentElement;if(t==='light'){r.classList.remove('dark');}else{r.classList.add('dark');}}catch(e){}})();`,
-          }}
-        />
       </head>
-
       <body>
         {children}
         <Scripts />
