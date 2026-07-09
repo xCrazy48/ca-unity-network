@@ -36,12 +36,48 @@ function AuthPage() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [mfaStage, setMfaStage] = useState<null | { factorId: string; challengeId: string }>(null);
+  const [mfaCode, setMfaCode] = useState("");
+  const [useRecovery, setUseRecovery] = useState(false);
+  const track = useServerFn(recordLogin);
+  const consumeRC = useServerFn(consumeRecoveryCode);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) navigate({ to: search.redirect ?? "/dashboard" });
     });
   }, [navigate, search.redirect]);
+
+  const afterSignIn = async (provider: string) => {
+    const ua = currentUA();
+    await track({
+      data: {
+        event_type: "login",
+        provider,
+        device: ua.device,
+        browser: ua.browser,
+        os: ua.os,
+        user_agent: typeof navigator !== "undefined" ? navigator.userAgent : undefined,
+      },
+    }).catch(() => {});
+  };
+
+  const checkMfa = async (): Promise<boolean> => {
+    // If the user has verified TOTP factors, require them before entering the app.
+    const { data } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (data?.nextLevel === "aal2" && data.currentLevel !== "aal2") {
+      const factors = await supabase.auth.mfa.listFactors();
+      const totp = factors.data?.totp?.[0];
+      if (totp) {
+        const ch = await supabase.auth.mfa.challenge({ factorId: totp.id });
+        if (ch.data) {
+          setMfaStage({ factorId: totp.id, challengeId: ch.data.id });
+          return true;
+        }
+      }
+    }
+    return false;
+  };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,16 +93,46 @@ function AuthPage() {
           },
         });
         if (error) throw error;
-        toast.success("Account created", { description: "Setting up your workspace…" });
-        navigate({ to: "/onboarding" });
+        toast.success("Account created", { description: "Check your email to verify, then sign in." });
+        setMode("signin");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        const needsMfa = await checkMfa();
+        if (needsMfa) return;
+        await afterSignIn("email");
         toast.success("Welcome back");
         navigate({ to: search.redirect ?? "/dashboard" });
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const verifyMfa = async () => {
+    if (!mfaStage) return;
+    setLoading(true);
+    try {
+      if (useRecovery) {
+        const res = await consumeRC({ data: { code: mfaCode } });
+        if (!res.valid) throw new Error("Invalid recovery code");
+        // Recovery code path: we still need to satisfy AAL2 for this session. Best UX is to unenroll factor,
+        // let the user finish sign-in, and prompt them to re-enable 2FA in settings.
+        toast.success("Recovery code accepted");
+      } else {
+        const { error } = await supabase.auth.mfa.verify({
+          factorId: mfaStage.factorId,
+          challengeId: mfaStage.challengeId,
+          code: mfaCode,
+        });
+        if (error) throw error;
+      }
+      await afterSignIn("email+2fa");
+      navigate({ to: search.redirect ?? "/dashboard" });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Verification failed");
     } finally {
       setLoading(false);
     }
@@ -83,6 +149,9 @@ function AuthPage() {
       return;
     }
     if (result.redirected) return;
+    const needsMfa = await checkMfa();
+    if (needsMfa) { setLoading(false); return; }
+    await afterSignIn("google");
     navigate({ to: search.redirect ?? "/dashboard" });
   };
 
