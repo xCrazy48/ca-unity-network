@@ -16,6 +16,7 @@ import {
   LogOut,
   MessageCircle,
   Settings,
+  Sparkles,
 
   Target,
   Timer,
