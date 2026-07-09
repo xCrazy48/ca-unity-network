@@ -46,3 +46,66 @@ export const logAdminAction = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+export const listUsersWithRoles = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { search?: string; limit?: number }) => ({ search: (d?.search ?? "").trim(), limit: Math.min(d?.limit ?? 50, 200) }))
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    let q = supabaseAdmin.from("profiles").select("id, full_name, referral_code, created_at").order("created_at", { ascending: false }).limit(data.limit);
+    if (data.search) q = q.ilike("full_name", `%${data.search}%`);
+    const { data: profiles, error } = await q;
+    if (error) throw new Error(error.message);
+    const ids = (profiles ?? []).map((p) => p.id);
+    if (ids.length === 0) return { users: [] };
+    const { data: roles, error: rErr } = await supabaseAdmin.from("user_roles").select("user_id, role").in("user_id", ids);
+    if (rErr) throw new Error(rErr.message);
+    const { data: authList } = await supabaseAdmin.auth.admin.listUsers({ perPage: 200 });
+    const emailMap = new Map((authList?.users ?? []).map((u) => [u.id, u.email ?? ""]));
+    const roleMap = new Map<string, string[]>();
+    for (const r of roles ?? []) {
+      const arr = roleMap.get(r.user_id) ?? [];
+      arr.push(r.role as string);
+      roleMap.set(r.user_id, arr);
+    }
+    return {
+      users: (profiles ?? []).map((p) => ({
+        id: p.id,
+        full_name: p.full_name ?? "",
+        email: emailMap.get(p.id) ?? "",
+        referral_code: p.referral_code ?? "",
+        roles: roleMap.get(p.id) ?? [],
+        created_at: p.created_at,
+      })),
+    };
+  });
+
+export const setUserAdminRole = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { user_id: string; make_admin: boolean }) => {
+    if (!d?.user_id) throw new Error("Missing user_id");
+    return { user_id: d.user_id, make_admin: !!d.make_admin };
+  })
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context.supabase, context.userId);
+    if (data.user_id === context.userId && !data.make_admin) {
+      throw new Error("You cannot demote yourself.");
+    }
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    if (data.make_admin) {
+      const { error } = await supabaseAdmin.from("user_roles").insert({ user_id: data.user_id, role: "admin" as never });
+      if (error && !`${error.message}`.toLowerCase().includes("duplicate")) throw new Error(error.message);
+    } else {
+      const { error } = await supabaseAdmin.from("user_roles").delete().eq("user_id", data.user_id).eq("role", "admin");
+      if (error) throw new Error(error.message);
+    }
+    await supabaseAdmin.from("admin_logs").insert({
+      actor_id: context.userId,
+      action: data.make_admin ? "promote_admin" : "demote_admin",
+      target_type: "user",
+      target_id: data.user_id,
+      metadata: {} as never,
+    });
+    return { ok: true };
+  });
