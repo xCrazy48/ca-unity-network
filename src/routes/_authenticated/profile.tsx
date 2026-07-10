@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
@@ -9,11 +9,6 @@ export const Route = createFileRoute("/_authenticated/profile")({
   component: Profile,
 });
 
-const MONTHS = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
-];
-
 function Profile() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -22,13 +17,7 @@ function Profile() {
   const [level, setLevel] = useState<string>("inter");
   const [initialLevel, setInitialLevel] = useState<string>("inter");
   const [levelChanges, setLevelChanges] = useState<number>(0);
-  const now = new Date();
-  const [examMonth, setExamMonth] = useState<number>(now.getMonth() + 1);
-  const [examYear, setExamYear] = useState<number>(now.getFullYear());
-  const [examDate, setExamDate] = useState<string>("");
   const [group, setGroup] = useState("both");
-  const [hours, setHours] = useState(6);
-  const [coaching, setCoaching] = useState("");
 
   useEffect(() => {
     (async () => {
@@ -36,16 +25,11 @@ function Profile() {
       setEmail(u.user?.email ?? "");
       const { data } = await supabase.from("profiles").select("*").maybeSingle();
       if (data) {
-        const d: any = data;
+        const d: { level?: string; level_change_count?: number } = data;
         setFullName(data.full_name ?? "");
         if (d.level) { setLevel(d.level); setInitialLevel(d.level); }
         setLevelChanges(Number(d.level_change_count ?? 0));
-        if (d.exam_month) setExamMonth(Number(d.exam_month));
-        if (d.exam_year) setExamYear(Number(d.exam_year));
-        if (d.exam_date) setExamDate(d.exam_date);
         if (data.exam_group) setGroup(data.exam_group);
-        if (data.daily_study_hours) setHours(Number(data.daily_study_hours));
-        setCoaching(data.coaching_schedule ?? "");
       }
       setLoading(false);
     })();
@@ -58,17 +42,11 @@ function Profile() {
   const save = async () => {
     setSaving(true);
     const { data: u } = await supabase.auth.getUser();
-    const finalExamDate = examDate || `${examYear}-${String(examMonth).padStart(2, "0")}-01`;
     const { error } = await supabase.from("profiles").upsert({
       id: u.user!.id,
       full_name: fullName,
       level: level as never,
-      exam_month: examMonth as never,
-      exam_year: examYear as never,
-      exam_date: finalExamDate as never,
       exam_group: group as never,
-      daily_study_hours: hours,
-      coaching_schedule: coaching,
       onboarded: true,
     } as never);
     setSaving(false);
@@ -79,8 +57,6 @@ function Profile() {
     }
     toast.success("Profile saved");
   };
-
-  const yearOptions = Array.from({ length: 6 }, (_, i) => now.getFullYear() + i);
 
   if (loading) return <AppShell><div className="text-muted-foreground">Loading…</div></AppShell>;
 
@@ -118,44 +94,6 @@ function Profile() {
                 : "Your level can only be changed 3 times in your lifetime."}
             </p>
           </Row>
-          <Row label="Exam month & year">
-            <div className="grid grid-cols-2 gap-2">
-              <select
-                value={examMonth}
-                onChange={(e) => {
-                  const m = Number(e.target.value);
-                  setExamMonth(m);
-                  setExamDate(`${examYear}-${String(m).padStart(2, "0")}-01`);
-                }}
-                className="rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-gold"
-              >
-                {MONTHS.map((m, i) => (
-                  <option key={m} value={i + 1}>{m}</option>
-                ))}
-              </select>
-              <select
-                value={examYear}
-                onChange={(e) => {
-                  const y = Number(e.target.value);
-                  setExamYear(y);
-                  setExamDate(`${y}-${String(examMonth).padStart(2, "0")}-01`);
-                }}
-                className="rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-gold"
-              >
-                {yearOptions.map((y) => (
-                  <option key={y} value={y}>{y}</option>
-                ))}
-              </select>
-            </div>
-          </Row>
-          <Row label="Exam date (defaults to 1st of exam month)">
-            <input
-              type="date"
-              value={examDate || `${examYear}-${String(examMonth).padStart(2, "0")}-01`}
-              onChange={(e) => setExamDate(e.target.value)}
-              className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-gold"
-            />
-          </Row>
           <Row label="Group">
             <select
               value={group}
@@ -167,27 +105,12 @@ function Profile() {
               <option value="both">Both Groups</option>
             </select>
           </Row>
-        </Card>
-
-        <Card title="Study rhythm">
-          <Row label={`Daily hours: ${hours}`}>
-            <input
-              type="range"
-              min={1}
-              max={14}
-              step={0.5}
-              value={hours}
-              onChange={(e) => setHours(Number(e.target.value))}
-              className="w-full accent-[oklch(0.82_0.14_82)]"
-            />
-          </Row>
-          <Row label="Coaching schedule">
-            <textarea
-              value={coaching}
-              rows={3}
-              onChange={(e) => setCoaching(e.target.value)}
-              className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-gold"
-            />
+          <Row label="Exam dates">
+            <p className="text-sm text-muted-foreground">
+              Paper-wise exam dates live in the{" "}
+              <Link to="/calendar" className="text-gold hover:underline">Exam Calendar</Link>.
+              They sync automatically to your dashboard and AI planner.
+            </p>
           </Row>
         </Card>
       </div>
