@@ -45,7 +45,7 @@ export type StudyPlanAiInput = {
 export type StudyPlanAiOutput = z.infer<typeof PlanSchema>;
 
 function createModel(lovableApiKey: string) {
-  return createLovableAiGatewayProvider(lovableApiKey)(MODEL);
+  return createLovableAiGatewayProvider(lovableApiKey, true)(MODEL);
 }
 
 function buildPrompt(data: StudyPlanAiInput, daysLeft: number, weeksLeft: number) {
@@ -119,7 +119,9 @@ export async function generateStudyPlanWithAi(
     });
     return normalizePlan(object);
   } catch (error) {
-    if (NoObjectGeneratedError.isInstance(error) && error.text) {
+    if (!NoObjectGeneratedError.isInstance(error)) throw error;
+
+    if (error.text) {
       try {
         return normalizePlan(extractJsonObject(error.text));
       } catch {
