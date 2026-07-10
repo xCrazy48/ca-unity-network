@@ -71,7 +71,7 @@ function StudyPlannerPage() {
   const deleteFn = useServerFn(deleteStudyPlan);
   const activateFn = useServerFn(activateStudyPlan);
 
-  const [examName, setExamName] = useState("CA Inter — Group 1");
+  const [examName, setExamName] = useState("");
   const [examDate, setExamDate] = useState("");
   const [level, setLevel] = useState<"beginner" | "intermediate" | "advanced" | "revision">("intermediate");
   const [dailyHours, setDailyHours] = useState("6");
@@ -79,6 +79,46 @@ function StudyPlannerPage() {
   const [weak, setWeak] = useState("");
   const [strong, setStrong] = useState("");
   const [notes, setNotes] = useState("");
+  const [prefilled, setPrefilled] = useState(false);
+
+  const { data: profile } = useQuery({
+    queryKey: ["profile"],
+    queryFn: async () => (await supabase.from("profiles").select("*").maybeSingle()).data,
+  });
+  const { data: examConfig } = useQuery({
+    queryKey: ["exam_config"],
+    queryFn: async () => (await supabase.from("exam_config").select("*").maybeSingle()).data,
+  });
+  const { data: papers } = useQuery({
+    queryKey: ["papers"],
+    queryFn: async () => (await supabase.from("papers").select("*").order("sort_order")).data ?? [],
+  });
+
+  // Auto-prefill from Exam Calendar (earliest upcoming paper for this student)
+  useEffect(() => {
+    if (prefilled) return;
+    const dates = (examConfig?.paper_dates as Record<string, string> | undefined) ?? {};
+    const level = (profile as { level?: string } | null)?.level ?? "inter";
+    const group = profile?.exam_group ?? "both";
+    const today = new Date().toISOString().slice(0, 10);
+    const upcoming = (papers ?? [])
+      .filter((p) => {
+        const pl = (p as { level?: string }).level ?? "inter";
+        if (pl !== level) return false;
+        if (group !== "both" && p.paper_group !== group) return false;
+        return !!dates[p.code] && dates[p.code] >= today;
+      })
+      .map((p) => ({ ...p, date: dates[p.code] }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+    if (upcoming.length > 0) {
+      const label = level === "final" ? "CA Final" : "CA Inter";
+      const first = upcoming[0];
+      setExamName(`${label} — ${first.name}`);
+      setExamDate(first.date);
+      if (profile?.daily_study_hours) setDailyHours(String(profile.daily_study_hours));
+      setPrefilled(true);
+    }
+  }, [examConfig, papers, profile, prefilled]);
 
   const { data: plans, isLoading } = useQuery({
     queryKey: ["study-plans"],
