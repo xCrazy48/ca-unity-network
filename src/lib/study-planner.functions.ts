@@ -1,42 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
-import { generateObject, NoObjectGeneratedError } from "ai";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
-
-const MODEL = "google/gemini-2.5-flash";
-
-function gateway() {
-  const key = process.env.LOVABLE_API_KEY;
-  if (!key) throw new Error("LOVABLE_API_KEY missing");
-  return createLovableAiGatewayProvider(key)(MODEL);
-}
-
-const PlanSchema = z.object({
-  strategy: z.string(),
-  daily_timetable: z.array(
-    z.object({
-      start: z.string(),
-      end: z.string(),
-      subject: z.string(),
-      activity: z.string(),
-      focus_area: z.string().nullable(),
-    }),
-  ),
-  weekly_goals: z.array(
-    z.object({
-      week: z.number().int(),
-      label: z.string(),
-      goals: z.array(z.string()),
-    }),
-  ),
-  monthly_goals: z.array(
-    z.object({
-      month: z.string(),
-      goals: z.array(z.string()),
-    }),
-  ),
-});
+import { generateStudyPlanWithAi } from "@/lib/study-planner.server";
 
 const GenerateInput = z.object({
   exam_name: z.string().min(1).max(120),
@@ -61,39 +26,9 @@ export const generateStudyPlan = createServerFn({ method: "POST" })
     );
     const weeksLeft = Math.max(1, Math.ceil(daysLeft / 7));
 
-    const prompt = `You are an elite study coach. Build a realistic, executable study plan.
-
-Exam: ${data.exam_name}
-Exam date: ${data.exam_date} (${daysLeft} days / ~${weeksLeft} weeks away)
-Preparation level: ${data.preparation_level}
-Daily study capacity: ${data.daily_hours} hours
-Schedule preference: ${data.schedule_preference || "no preference"}
-Weak subjects: ${data.weak_subjects.join(", ") || "none listed"}
-Strong subjects: ${data.strong_subjects.join(", ") || "none listed"}
-Extra notes: ${data.notes || "none"}
-
-Produce:
-1. strategy — 3-6 sentence overall approach (concept-building → practice → revision phases based on time left).
-2. daily_timetable — a full day of time-blocks fitting within ${data.daily_hours} hours of study (plus short breaks). Prioritise weak subjects. Include realistic clock times (24h "HH:MM").
-3. weekly_goals — one entry per week (up to 8 weeks, or fewer if exam is closer), with 3-5 concrete goals each. Focus each week on specific subjects/chapters.
-4. monthly_goals — one entry per remaining month with 3-5 milestone goals.
-
-Rules: Be specific. Reference actual subjects. Never invent syllabus not implied by the exam name. Weak subjects get more time and earlier placement in the day. Include a mock test cycle in the final weeks.`;
-
-    let plan: z.infer<typeof PlanSchema>;
-    try {
-      const res = await generateObject({
-        model: gateway(),
-        schema: PlanSchema,
-        prompt,
-      });
-      plan = res.object;
-    } catch (err) {
-      if (NoObjectGeneratedError.isInstance(err)) {
-        throw new Error("Could not generate a plan. Try adjusting inputs and retry.");
-      }
-      throw err;
-    }
+    const key = process.env.LOVABLE_API_KEY;
+    if (!key) throw new Error("LOVABLE_API_KEY missing");
+    const plan = await generateStudyPlanWithAi(data, key, daysLeft, weeksLeft);
 
     // Deactivate previous active plan
     await context.supabase
