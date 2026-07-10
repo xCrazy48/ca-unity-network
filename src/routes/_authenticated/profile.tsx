@@ -25,7 +25,7 @@ function Profile() {
       setEmail(u.user?.email ?? "");
       const { data } = await supabase.from("profiles").select("*").maybeSingle();
       if (data) {
-        const d: { level?: string; level_change_count?: number } = data;
+        const d = data as { level?: string | null; level_change_count?: number | null };
         setFullName(data.full_name ?? "");
         if (d.level) { setLevel(d.level); setInitialLevel(d.level); }
         setLevelChanges(Number(d.level_change_count ?? 0));
