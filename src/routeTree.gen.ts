@@ -18,7 +18,6 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedStudyPlannerRouteImport } from './routes/_authenticated/study-planner'
-import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedRtpPyqRouteImport } from './routes/_authenticated/rtp-pyq'
 import { Route as AuthenticatedRemindersRouteImport } from './routes/_authenticated/reminders'
 import { Route as AuthenticatedReflectionRouteImport } from './routes/_authenticated/reflection'
@@ -83,11 +82,6 @@ const AuthenticatedStudyPlannerRoute =
     path: '/study-planner',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const AuthenticatedRtpPyqRoute = AuthenticatedRtpPyqRouteImport.update({
   id: '/rtp-pyq',
   path: '/rtp-pyq',
@@ -205,7 +199,6 @@ export interface FileRoutesByFullPath {
   '/reflection': typeof AuthenticatedReflectionRoute
   '/reminders': typeof AuthenticatedRemindersRoute
   '/rtp-pyq': typeof AuthenticatedRtpPyqRoute
-  '/settings': typeof AuthenticatedSettingsRoute
   '/study-planner': typeof AuthenticatedStudyPlannerRoute
 }
 export interface FileRoutesByTo {
@@ -234,7 +227,6 @@ export interface FileRoutesByTo {
   '/reflection': typeof AuthenticatedReflectionRoute
   '/reminders': typeof AuthenticatedRemindersRoute
   '/rtp-pyq': typeof AuthenticatedRtpPyqRoute
-  '/settings': typeof AuthenticatedSettingsRoute
   '/study-planner': typeof AuthenticatedStudyPlannerRoute
 }
 export interface FileRoutesById {
@@ -265,7 +257,6 @@ export interface FileRoutesById {
   '/_authenticated/reflection': typeof AuthenticatedReflectionRoute
   '/_authenticated/reminders': typeof AuthenticatedRemindersRoute
   '/_authenticated/rtp-pyq': typeof AuthenticatedRtpPyqRoute
-  '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/study-planner': typeof AuthenticatedStudyPlannerRoute
 }
 export interface FileRouteTypes {
@@ -296,7 +287,6 @@ export interface FileRouteTypes {
     | '/reflection'
     | '/reminders'
     | '/rtp-pyq'
-    | '/settings'
     | '/study-planner'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -325,7 +315,6 @@ export interface FileRouteTypes {
     | '/reflection'
     | '/reminders'
     | '/rtp-pyq'
-    | '/settings'
     | '/study-planner'
   id:
     | '__root__'
@@ -355,7 +344,6 @@ export interface FileRouteTypes {
     | '/_authenticated/reflection'
     | '/_authenticated/reminders'
     | '/_authenticated/rtp-pyq'
-    | '/_authenticated/settings'
     | '/_authenticated/study-planner'
   fileRoutesById: FileRoutesById
 }
@@ -433,13 +421,6 @@ declare module '@tanstack/react-router' {
       path: '/study-planner'
       fullPath: '/study-planner'
       preLoaderRoute: typeof AuthenticatedStudyPlannerRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/settings': {
-      id: '/_authenticated/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/rtp-pyq': {
@@ -590,7 +571,6 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedReflectionRoute: typeof AuthenticatedReflectionRoute
   AuthenticatedRemindersRoute: typeof AuthenticatedRemindersRoute
   AuthenticatedRtpPyqRoute: typeof AuthenticatedRtpPyqRoute
-  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedStudyPlannerRoute: typeof AuthenticatedStudyPlannerRoute
 }
 
@@ -613,7 +593,6 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedReflectionRoute: AuthenticatedReflectionRoute,
   AuthenticatedRemindersRoute: AuthenticatedRemindersRoute,
   AuthenticatedRtpPyqRoute: AuthenticatedRtpPyqRoute,
-  AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedStudyPlannerRoute: AuthenticatedStudyPlannerRoute,
 }
 
