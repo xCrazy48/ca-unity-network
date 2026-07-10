@@ -195,9 +195,14 @@ function StudyPlannerPage() {
             <CardDescription>Fill these in — takes ~30 seconds.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            <div className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+              Exam & date auto-fill from your{" "}
+              <Link to="/calendar" className="text-gold hover:underline">Exam Calendar</Link>.
+              Edit there once and it syncs everywhere.
+            </div>
             <div>
               <Label>Exam</Label>
-              <Input value={examName} onChange={(e) => setExamName(e.target.value)} placeholder="CA Inter Group 1" />
+              <Input value={examName} onChange={(e) => setExamName(e.target.value)} placeholder="CA Inter — Paper 1" />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
