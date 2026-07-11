@@ -4,6 +4,25 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { generateStudyPlanWithAi, type SyllabusPaper } from "@/lib/study-planner.server";
 import { FINAL_CHAPTERS } from "@/lib/icai-syllabus";
 
+type TimetableBlock = {
+  start: string;
+  end: string;
+  subject: string;
+  activity: string;
+  focus_area: string | null;
+};
+
+type PlanDayType = "study" | "revision" | "holiday" | "buffer";
+
+type PlanDay = {
+  date: string; // YYYY-MM-DD
+  type: PlanDayType;
+  wake: string | null;
+  sleep: string | null;
+  note: string | null;
+  blocks: TimetableBlock[];
+};
+
 const GenerateInput = z.object({
   exam_name: z.string().min(1).max(120),
   exam_date: z.string().min(1),
