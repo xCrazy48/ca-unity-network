@@ -15,7 +15,10 @@ import {
 import { AppShell } from "@/components/app-shell";
 import { QuoteDialog } from "@/components/quote-dialog";
 import { MentoringCard } from "@/components/mentoring-card";
+import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+import { useUserPapers } from "@/hooks/use-user-papers";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
