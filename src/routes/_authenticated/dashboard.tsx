@@ -47,10 +47,8 @@ function Dashboard() {
     },
   });
 
-  const { data: papers } = useQuery({
-    queryKey: ["papers"],
-    queryFn: async () => (await supabase.from("papers").select("*").order("sort_order")).data ?? [],
-  });
+  const { data: papers } = useUserPapers();
+
 
   const { data: progress } = useQuery({
     queryKey: ["chapter_progress"],
