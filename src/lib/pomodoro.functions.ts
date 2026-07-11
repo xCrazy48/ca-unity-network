@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireSupabaseAuthWithMfa } from "@/integrations/supabase/require-mfa";
 
 const Input = z.object({
   started_at: z.string(),
@@ -12,7 +12,7 @@ const Input = z.object({
 });
 
 export const logFocusSession = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSupabaseAuthWithMfa])
   .inputValidator((v: unknown) => Input.parse(v))
   .handler(async ({ context, data }) => {
     const { error } = await context.supabase.from("focus_sessions").insert({

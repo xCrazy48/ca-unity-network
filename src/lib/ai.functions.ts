@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { generateObject, generateText } from "ai";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireSupabaseAuthWithMfa } from "@/integrations/supabase/require-mfa";
 import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
 
 const MODEL = "google/gemini-2.5-flash";
@@ -72,7 +72,7 @@ Scheduled tasks: ${ctx.tasks.length}
 }
 
 export const getDailyBrief = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSupabaseAuthWithMfa])
   .handler(async ({ context }) => {
     const ctx = await gatherContext(context.supabase, context.userId);
     const model = getGateway();
@@ -101,7 +101,7 @@ const WeeklyPlanSchema = z.object({
 });
 
 export const getWeeklyReview = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSupabaseAuthWithMfa])
   .handler(async ({ context }) => {
     const ctx = await gatherContext(context.supabase, context.userId);
     const model = getGateway();
@@ -160,7 +160,7 @@ const RevisionPlanInput = z.object({
 });
 
 export const generateRevisionPlan = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSupabaseAuthWithMfa])
   .inputValidator((v: unknown) => RevisionPlanInput.parse(v))
   .handler(async ({ context, data }) => {
     const ctx = await gatherContext(context.supabase, context.userId);
@@ -189,7 +189,7 @@ export const generateRevisionPlan = createServerFn({ method: "POST" })
 const DiagnoseInput = z.object({ paperCode: z.string().optional() });
 
 export const diagnoseWeakChapters = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSupabaseAuthWithMfa])
   .inputValidator((v: unknown) => DiagnoseInput.parse(v))
   .handler(async ({ context, data }) => {
     const ctx = await gatherContext(context.supabase, context.userId);

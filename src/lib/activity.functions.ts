@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireSupabaseAuthWithMfa } from "@/integrations/supabase/require-mfa";
 
 function ipFromRequest(): string | null {
   const req = getRequest();
@@ -20,7 +20,7 @@ function countryFromRequest(): string | null {
 
 // Record a login/session event. IP + country from Cloudflare edge headers.
 export const recordLogin = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSupabaseAuthWithMfa])
   .inputValidator((d: {
     event_type: "login" | "logout" | "failed_login" | "session_start" | "session_end";
     provider?: string;
@@ -70,7 +70,7 @@ export const recordLogin = createServerFn({ method: "POST" })
 
 // Record generic activity (page visits, feature usage)
 export const recordActivity = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSupabaseAuthWithMfa])
   .inputValidator((d: {
     activity_type: string;
     page_path?: string;
@@ -104,7 +104,7 @@ export const recordActivity = createServerFn({ method: "POST" })
 
 // Logout from all devices — revokes all refresh tokens via Supabase Admin API.
 export const logoutAllDevices = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSupabaseAuthWithMfa])
   .handler(async ({ context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.auth.admin.signOut(context.userId, "global");
