@@ -477,5 +477,94 @@ export const regenerateDay = createServerFn({ method: "POST" })
     return { blocks: newBlocks };
   });
 
+const RegenerateRemainingInput = z.object({
+  plan_id: z.string().uuid(),
+  from_date: z.string().optional(),
+  focus_hint: z.string().max(400).optional().nullable(),
+});
 
+export const regenerateRemaining = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((v: unknown) => RegenerateRemainingInput.parse(v))
+  .handler(async ({ context, data }) => {
+    const { data: plan, error } = await context.supabase
+      .from("study_plans")
+      .select("*")
+      .eq("id", data.plan_id)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!plan) throw new Error("Plan not found");
+
+    const key = process.env.LOVABLE_API_KEY;
+    if (!key) throw new Error("LOVABLE_API_KEY missing");
+
+    const { data: profile } = await context.supabase
+      .from("profiles")
+      .select("level,exam_group")
+      .eq("id", context.userId)
+      .maybeSingle();
+    const level = (profile?.level === "final" ? "final" : "inter") as "inter" | "final";
+    const group = ((profile?.exam_group as string) || "both") as "group_1" | "group_2" | "both";
+    const syllabus = await loadSyllabus(context.supabase, level, group);
+
+    const from = data.from_date ? new Date(data.from_date) : new Date();
+    from.setUTCHours(0, 0, 0, 0);
+    const examDate = new Date(plan.exam_date);
+    const daysLeft = Math.max(1, Math.ceil((examDate.getTime() - from.getTime()) / 86400000));
+
+    const fresh = await generateStudyPlanWithAi(
+      {
+        exam_name: plan.exam_name,
+        exam_date: plan.exam_date,
+        preparation_level: plan.preparation_level as "beginner" | "intermediate" | "advanced" | "revision",
+        daily_hours: plan.daily_hours,
+        schedule_preference: plan.schedule_preference,
+        weak_subjects: (plan.weak_subjects as string[]) ?? [],
+        strong_subjects: (plan.strong_subjects as string[]) ?? [],
+        notes: [plan.notes, data.focus_hint, "Rebuild only the REMAINING days (not the whole plan). Adjust intelligently for time lost."].filter(Boolean).join(" "),
+        student_level: level,
+        student_group: group,
+        syllabus,
+      },
+      key,
+      daysLeft,
+      Math.max(1, Math.ceil(daysLeft / 7)),
+    );
+
+    const existing = ((plan.plan_days as unknown) as PlanDay[] | null) ?? [];
+    const past = existing.filter((d) => d.date < from.toISOString().slice(0, 10));
+    const capped = Math.min(daysLeft, 90);
+    const bufferDays = Math.min(capped - 1, 3);
+    const nextDays: PlanDay[] = [];
+    for (let i = 0; i < capped; i++) {
+      const d = new Date(from.getTime() + i * 86400000);
+      const iso = d.toISOString().slice(0, 10);
+      const type: PlanDayType = i >= capped - bufferDays ? "revision" : "study";
+      nextDays.push({
+        date: iso,
+        type,
+        wake: "06:30",
+        sleep: "23:00",
+        note: null,
+        blocks: fresh.daily_timetable.map((b) => ({ ...b })),
+      });
+    }
+    const merged = [...past, ...nextDays];
+
+    const { error: upErr } = await (context.supabase as any)
+      .from("study_plans")
+      .update({
+        plan_days: merged,
+        daily_timetable: fresh.daily_timetable,
+        strategy: fresh.strategy,
+        weekly_goals: fresh.weekly_goals,
+        monthly_goals: fresh.monthly_goals,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", data.plan_id)
+      .eq("user_id", context.userId);
+    if (upErr) throw new Error(upErr.message);
+
+    return { ok: true, from: from.toISOString().slice(0, 10), days: nextDays.length };
+  });
 
