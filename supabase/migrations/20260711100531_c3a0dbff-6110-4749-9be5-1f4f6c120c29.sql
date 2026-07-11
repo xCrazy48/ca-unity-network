@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "admin read settings" ON public.user_settings;
