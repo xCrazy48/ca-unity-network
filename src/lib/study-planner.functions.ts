@@ -98,6 +98,26 @@ export const generateStudyPlan = createServerFn({ method: "POST" })
     );
 
 
+    // Build initial plan_days: expand daily_timetable across days up to the exam.
+    const capped = Math.min(daysLeft, 90);
+    const planDays: PlanDay[] = [];
+    const startDate = new Date();
+    startDate.setUTCHours(0, 0, 0, 0);
+    for (let i = 0; i < capped; i++) {
+      const d = new Date(startDate.getTime() + i * 86400000);
+      const iso = d.toISOString().slice(0, 10);
+      // Last 3 days = revision by default
+      const type: PlanDayType = i >= capped - 3 ? "revision" : "study";
+      planDays.push({
+        date: iso,
+        type,
+        wake: "06:30",
+        sleep: "23:00",
+        note: null,
+        blocks: type === "study" ? plan.daily_timetable.map((b) => ({ ...b })) : [],
+      });
+    }
+
     // Deactivate previous active plan
     await context.supabase
       .from("study_plans")
@@ -105,7 +125,7 @@ export const generateStudyPlan = createServerFn({ method: "POST" })
       .eq("user_id", context.userId)
       .eq("is_active", true);
 
-    const { data: row, error } = await context.supabase
+    const { data: row, error } = await (context.supabase as any)
       .from("study_plans")
       .insert({
         user_id: context.userId,
@@ -121,6 +141,7 @@ export const generateStudyPlan = createServerFn({ method: "POST" })
         daily_timetable: plan.daily_timetable,
         weekly_goals: plan.weekly_goals,
         monthly_goals: plan.monthly_goals,
+        plan_days: planDays,
         is_active: true,
       })
       .select()
