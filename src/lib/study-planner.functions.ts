@@ -32,7 +32,52 @@ const GenerateInput = z.object({
   weak_subjects: z.array(z.string()).default([]),
   strong_subjects: z.array(z.string()).default([]),
   notes: z.string().max(1000).optional().nullable(),
+  // New optional preferences — AI decides when omitted
+  study_style: z.enum(["aggressive", "balanced", "relaxed", "ranker"]).optional().nullable(),
+  attempt: z.string().max(60).optional().nullable(),
+  coaching_hours: z.number().min(0).max(12).optional().nullable(),
+  working: z.boolean().optional().nullable(),
+  preferred_slots: z.array(z.enum(["early_morning", "morning", "afternoon", "evening", "night"])).optional().default([]),
+  subjects_per_day: z.union([z.literal(1), z.literal(2), z.literal(3)]).optional().nullable(),
+  max_session_hours: z.union([z.literal(1), z.literal(1.5), z.literal(2)]).optional().nullable(),
+  revision_frequency: z.enum(["daily", "every_2_days", "weekly"]).optional().nullable(),
+  buffer_days: z.number().int().min(0).max(30).optional().nullable(),
+  weekly_holiday: z.enum(["sun", "mon", "tue", "wed", "thu", "fri", "sat"]).optional().nullable(),
+  break_minutes: z.union([z.literal(15), z.literal(30), z.literal(45)]).optional().nullable(),
 });
+
+const SLOT_LABELS: Record<string, string> = {
+  early_morning: "Early morning (5–8 AM)",
+  morning: "Morning (8 AM–12 PM)",
+  afternoon: "Afternoon (12–4 PM)",
+  evening: "Evening (4–8 PM)",
+  night: "Night (8 PM onward)",
+};
+const STYLE_BRIEFS: Record<string, string> = {
+  aggressive: "AGGRESSIVE MODE: prioritise fastest syllabus completion. Longer sessions, smaller buffers, fewer holidays. Suitable for late starters.",
+  balanced: "BALANCED MODE: healthy mix of learning, revision and practice. Moderate daily workload.",
+  relaxed: "RELAXED MODE: lighter daily load, more buffer days, frequent short revisions, lower burnout risk.",
+  ranker: "RANKER MODE: heavy revision cycles, spaced repetition, extra mocks (MTP/RTP), daily recall sessions, focus on high-weightage topics, strict discipline.",
+};
+const DAY_LABELS: Record<string, string> = { sun: "Sunday", mon: "Monday", tue: "Tuesday", wed: "Wednesday", thu: "Thursday", fri: "Friday", sat: "Saturday" };
+const DAY_IDX: Record<string, number> = { sun: 0, mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6 };
+
+function buildPreferenceNotes(data: z.infer<typeof GenerateInput>): string {
+  const parts: string[] = [];
+  if (data.study_style) parts.push(STYLE_BRIEFS[data.study_style]);
+  if (data.attempt) parts.push(`Attempt: ${data.attempt}.`);
+  if (typeof data.coaching_hours === "number" && data.coaching_hours > 0) parts.push(`Coaching: ~${data.coaching_hours}h/day — schedule study around it.`);
+  if (data.working) parts.push("Student is working / in articleship — realistic weekday load, heavier weekend sessions.");
+  if (data.preferred_slots?.length) parts.push(`Preferred study slots: ${data.preferred_slots.map((s) => SLOT_LABELS[s]).join(", ")}.`);
+  if (data.subjects_per_day) parts.push(`Target ${data.subjects_per_day} subject(s) per day.`);
+  if (data.max_session_hours) parts.push(`Max continuous session: ${data.max_session_hours}h before a break.`);
+  if (data.revision_frequency) parts.push(`Revision frequency: ${data.revision_frequency.replace(/_/g, " ")}.`);
+  if (typeof data.buffer_days === "number") parts.push(`Reserve ~${data.buffer_days} buffer day(s) before exam.`);
+  if (data.weekly_holiday) parts.push(`Weekly holiday: ${DAY_LABELS[data.weekly_holiday]}.`);
+  if (data.break_minutes) parts.push(`Break duration: ${data.break_minutes} min.`);
+  parts.push("Any preference not stated → decide intelligently as an experienced CA mentor. Do not ask the user; produce the best plan.");
+  return parts.join(" ");
+}
 
 async function loadSyllabus(
   supabase: any,
@@ -109,31 +154,39 @@ export const generateStudyPlan = createServerFn({ method: "POST" })
       );
     }
 
+    const preferenceNotes = buildPreferenceNotes(data);
+    const mergedNotes = [data.notes, preferenceNotes].filter(Boolean).join(" \n\n");
+
     const plan = await generateStudyPlanWithAi(
-      { ...data, student_level: level, student_group: group, syllabus },
+      { ...data, notes: mergedNotes, student_level: level, student_group: group, syllabus },
       key,
       daysLeft,
       weeksLeft,
     );
 
-
     // Build initial plan_days: expand daily_timetable across days up to the exam.
     const capped = Math.min(daysLeft, 90);
+    const bufferDays = Math.min(
+      capped - 1,
+      Math.max(0, typeof data.buffer_days === "number" ? data.buffer_days : 3),
+    );
+    const holidayIdx = data.weekly_holiday ? DAY_IDX[data.weekly_holiday] : -1;
     const planDays: PlanDay[] = [];
     const startDate = new Date();
     startDate.setUTCHours(0, 0, 0, 0);
     for (let i = 0; i < capped; i++) {
       const d = new Date(startDate.getTime() + i * 86400000);
       const iso = d.toISOString().slice(0, 10);
-      // Last 3 days = revision by default
-      const type: PlanDayType = i >= capped - 3 ? "revision" : "study";
+      let type: PlanDayType = "study";
+      if (i >= capped - bufferDays) type = "revision";
+      if (holidayIdx >= 0 && d.getUTCDay() === holidayIdx && type !== "revision") type = "holiday";
       planDays.push({
         date: iso,
         type,
         wake: "06:30",
         sleep: "23:00",
         note: null,
-        blocks: type === "study" ? plan.daily_timetable.map((b) => ({ ...b })) : [],
+        blocks: type === "study" || type === "revision" ? plan.daily_timetable.map((b) => ({ ...b })) : [],
       });
     }
 
@@ -424,5 +477,94 @@ export const regenerateDay = createServerFn({ method: "POST" })
     return { blocks: newBlocks };
   });
 
+const RegenerateRemainingInput = z.object({
+  plan_id: z.string().uuid(),
+  from_date: z.string().optional(),
+  focus_hint: z.string().max(400).optional().nullable(),
+});
 
+export const regenerateRemaining = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((v: unknown) => RegenerateRemainingInput.parse(v))
+  .handler(async ({ context, data }) => {
+    const { data: plan, error } = await context.supabase
+      .from("study_plans")
+      .select("*")
+      .eq("id", data.plan_id)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!plan) throw new Error("Plan not found");
+
+    const key = process.env.LOVABLE_API_KEY;
+    if (!key) throw new Error("LOVABLE_API_KEY missing");
+
+    const { data: profile } = await context.supabase
+      .from("profiles")
+      .select("level,exam_group")
+      .eq("id", context.userId)
+      .maybeSingle();
+    const level = (profile?.level === "final" ? "final" : "inter") as "inter" | "final";
+    const group = ((profile?.exam_group as string) || "both") as "group_1" | "group_2" | "both";
+    const syllabus = await loadSyllabus(context.supabase, level, group);
+
+    const from = data.from_date ? new Date(data.from_date) : new Date();
+    from.setUTCHours(0, 0, 0, 0);
+    const examDate = new Date(plan.exam_date);
+    const daysLeft = Math.max(1, Math.ceil((examDate.getTime() - from.getTime()) / 86400000));
+
+    const fresh = await generateStudyPlanWithAi(
+      {
+        exam_name: plan.exam_name,
+        exam_date: plan.exam_date,
+        preparation_level: plan.preparation_level as "beginner" | "intermediate" | "advanced" | "revision",
+        daily_hours: plan.daily_hours,
+        schedule_preference: plan.schedule_preference,
+        weak_subjects: (plan.weak_subjects as string[]) ?? [],
+        strong_subjects: (plan.strong_subjects as string[]) ?? [],
+        notes: [plan.notes, data.focus_hint, "Rebuild only the REMAINING days (not the whole plan). Adjust intelligently for time lost."].filter(Boolean).join(" "),
+        student_level: level,
+        student_group: group,
+        syllabus,
+      },
+      key,
+      daysLeft,
+      Math.max(1, Math.ceil(daysLeft / 7)),
+    );
+
+    const existing = ((plan.plan_days as unknown) as PlanDay[] | null) ?? [];
+    const past = existing.filter((d) => d.date < from.toISOString().slice(0, 10));
+    const capped = Math.min(daysLeft, 90);
+    const bufferDays = Math.min(capped - 1, 3);
+    const nextDays: PlanDay[] = [];
+    for (let i = 0; i < capped; i++) {
+      const d = new Date(from.getTime() + i * 86400000);
+      const iso = d.toISOString().slice(0, 10);
+      const type: PlanDayType = i >= capped - bufferDays ? "revision" : "study";
+      nextDays.push({
+        date: iso,
+        type,
+        wake: "06:30",
+        sleep: "23:00",
+        note: null,
+        blocks: fresh.daily_timetable.map((b) => ({ ...b })),
+      });
+    }
+    const merged = [...past, ...nextDays];
+
+    const { error: upErr } = await (context.supabase as any)
+      .from("study_plans")
+      .update({
+        plan_days: merged,
+        daily_timetable: fresh.daily_timetable,
+        strategy: fresh.strategy,
+        weekly_goals: fresh.weekly_goals,
+        monthly_goals: fresh.monthly_goals,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", data.plan_id)
+      .eq("user_id", context.userId);
+    if (upErr) throw new Error(upErr.message);
+
+    return { ok: true, from: from.toISOString().slice(0, 10), days: nextDays.length };
+  });
 
