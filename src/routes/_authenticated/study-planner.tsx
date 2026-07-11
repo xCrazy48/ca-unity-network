@@ -1,18 +1,35 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
-import { format, parseISO } from "date-fns";
-import { CalendarDays, Check, Loader2, MoveRight, Plus, RefreshCw, Sparkles, Star, Target, Trash2, Wand2 } from "lucide-react";
+import { format, parseISO, startOfWeek, addDays } from "date-fns";
+import {
+  CalendarDays,
+  Check,
+  Download,
+  Loader2,
+  RefreshCw,
+  Sparkles,
+  Star,
+  Target,
+  Wand2,
+  ListChecks,
+  ChevronLeft,
+  ChevronRight,
+  Zap,
+  Scale,
+  Leaf,
+  Trophy,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/app-shell";
 import { PageHeader, EmptyState } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Card,
   CardContent,
@@ -29,18 +46,21 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
-import { generateStudyPlan, deleteStudyPlan, activateStudyPlan, syncPlanToTasks, updateStudyPlan, regenerateDay } from "@/lib/study-planner.functions";
-import { Link } from "@tanstack/react-router";
-import { ListChecks } from "lucide-react";
+import {
+  generateStudyPlan,
+  syncPlanToTasks,
+  regenerateRemaining,
+} from "@/lib/study-planner.functions";
+import { useUserPapers } from "@/hooks/use-user-papers";
 
 export const Route = createFileRoute("/_authenticated/study-planner")({
   head: () => ({
     meta: [
-      { title: "AI Study Planner · CA Unity Network" },
+      { title: "AI Timetable · CA Unity Network" },
       {
         name: "description",
         content:
-          "Generate a personalised daily timetable and weekly + monthly goals from your exam date, prep level, and weak subjects.",
+          "A premium AI study planner for CA aspirants. Set your goals in under 2 minutes; the AI builds a smart timetable, syncs it to your planner, and adapts as you go.",
       },
       { name: "robots", content: "noindex" },
     ],
@@ -67,28 +87,61 @@ type PlanDay = {
   blocks: TimetableBlock[];
 };
 
+type Slot = "early_morning" | "morning" | "afternoon" | "evening" | "night";
+type Style = "aggressive" | "balanced" | "relaxed" | "ranker";
+
+const SLOTS: { value: Slot; label: string }[] = [
+  { value: "early_morning", label: "Early Morning · 5–8 AM" },
+  { value: "morning", label: "Morning · 8 AM–12 PM" },
+  { value: "afternoon", label: "Afternoon · 12–4 PM" },
+  { value: "evening", label: "Evening · 4–8 PM" },
+  { value: "night", label: "Night · 8 PM onward" },
+];
+
+const STYLES: {
+  value: Style;
+  title: string;
+  icon: typeof Zap;
+  points: string[];
+  badge?: string;
+}[] = [
+  {
+    value: "aggressive",
+    title: "Aggressive",
+    icon: Zap,
+    points: ["Max syllabus speed", "Smaller buffers", "Longer sessions"],
+  },
+  {
+    value: "balanced",
+    title: "Balanced",
+    icon: Scale,
+    badge: "Recommended",
+    points: ["Learn · revise · practice", "Moderate load", "Best for most"],
+  },
+  {
+    value: "relaxed",
+    title: "Relaxed",
+    icon: Leaf,
+    points: ["Lighter days", "More buffers", "Low burnout"],
+  },
+  {
+    value: "ranker",
+    title: "Ranker",
+    icon: Trophy,
+    points: ["Spaced repetition", "Extra mocks", "High-weightage focus"],
+  },
+];
+
 const LEVELS = [
   { value: "beginner", label: "Just starting" },
-  { value: "intermediate", label: "Halfway through syllabus" },
-  { value: "advanced", label: "Syllabus done, need practice" },
+  { value: "intermediate", label: "Halfway through" },
+  { value: "advanced", label: "Syllabus done" },
   { value: "revision", label: "Full revision mode" },
 ];
 
 function StudyPlannerPage() {
   const qc = useQueryClient();
   const generateFn = useServerFn(generateStudyPlan);
-  const deleteFn = useServerFn(deleteStudyPlan);
-  const activateFn = useServerFn(activateStudyPlan);
-
-  const [examName, setExamName] = useState("");
-  const [examDate, setExamDate] = useState("");
-  const [level, setLevel] = useState<"beginner" | "intermediate" | "advanced" | "revision">("intermediate");
-  const [dailyHours, setDailyHours] = useState("6");
-  const [schedule, setSchedule] = useState("Morning study 6-10 AM, evening 6-9 PM, weekends longer");
-  const [weak, setWeak] = useState("");
-  const [strong, setStrong] = useState("");
-  const [notes, setNotes] = useState("");
-  const [prefilled, setPrefilled] = useState(false);
 
   const { data: profile } = useQuery({
     queryKey: ["profile"],
@@ -98,36 +151,7 @@ function StudyPlannerPage() {
     queryKey: ["exam_config"],
     queryFn: async () => (await supabase.from("exam_config").select("*").maybeSingle()).data,
   });
-  const { data: papers } = useQuery({
-    queryKey: ["papers"],
-    queryFn: async () => (await supabase.from("papers").select("*").order("sort_order")).data ?? [],
-  });
-
-  // Auto-prefill from Exam Calendar (earliest upcoming paper for this student)
-  useEffect(() => {
-    if (prefilled) return;
-    const dates = (examConfig?.paper_dates as Record<string, string> | undefined) ?? {};
-    const level = (profile as { level?: string } | null)?.level ?? "inter";
-    const group = profile?.exam_group ?? "both";
-    const today = new Date().toISOString().slice(0, 10);
-    const upcoming = (papers ?? [])
-      .filter((p) => {
-        const pl = (p as { level?: string }).level ?? "inter";
-        if (pl !== level) return false;
-        if (group !== "both" && p.paper_group !== group) return false;
-        return !!dates[p.code] && dates[p.code] >= today;
-      })
-      .map((p) => ({ ...p, date: dates[p.code] }))
-      .sort((a, b) => a.date.localeCompare(b.date));
-    if (upcoming.length > 0) {
-      const label = level === "final" ? "CA Final" : "CA Inter";
-      const first = upcoming[0];
-      setExamName(`${label} — ${first.name}`);
-      setExamDate(first.date);
-      if (profile?.daily_study_hours) setDailyHours(String(profile.daily_study_hours));
-      setPrefilled(true);
-    }
-  }, [examConfig, papers, profile, prefilled]);
+  const { data: userPapers } = useUserPapers();
 
   const { data: plans, isLoading } = useQuery({
     queryKey: ["study-plans"],
@@ -140,150 +164,414 @@ function StudyPlannerPage() {
       return data ?? [];
     },
   });
-
   const active = useMemo(() => plans?.find((p) => p.is_active) ?? plans?.[0], [plans]);
+
+  // Wizard state
+  const [step, setStep] = useState(1);
+  const [examName, setExamName] = useState("");
+  const [examDate, setExamDate] = useState("");
+  const [attempt, setAttempt] = useState("");
+  const [dailyHours, setDailyHours] = useState("6");
+  const [coachingHours, setCoachingHours] = useState("");
+  const [working, setWorking] = useState(false);
+  const [level, setLevel] = useState<"beginner" | "intermediate" | "advanced" | "revision">(
+    "intermediate",
+  );
+
+  const [slots, setSlots] = useState<Slot[]>([]);
+  const [subjectsPerDay, setSubjectsPerDay] = useState<string>("auto");
+  const [maxSession, setMaxSession] = useState<string>("auto");
+  const [revisionFreq, setRevisionFreq] = useState<string>("auto");
+  const [bufferDays, setBufferDays] = useState<string>("");
+  const [weeklyHoliday, setWeeklyHoliday] = useState<string>("auto");
+  const [breakMinutes, setBreakMinutes] = useState<string>("auto");
+  const [weak, setWeak] = useState<string[]>([]);
+  const [strong, setStrong] = useState<string[]>([]);
+
+  const [style, setStyle] = useState<Style>("balanced");
+
+  const [prefilled, setPrefilled] = useState(false);
+  useEffect(() => {
+    if (prefilled) return;
+    const dates = (examConfig?.paper_dates as Record<string, string> | undefined) ?? {};
+    const lvl = (profile as { level?: string } | null)?.level ?? "inter";
+    const group = profile?.exam_group ?? "both";
+    const today = new Date().toISOString().slice(0, 10);
+    const upcoming = (userPapers ?? [])
+      .filter((p) => {
+        const pl = (p as { level?: string }).level ?? "inter";
+        if (pl !== lvl) return false;
+        if (group !== "both" && p.paper_group !== group) return false;
+        return !!dates[p.code] && dates[p.code] >= today;
+      })
+      .map((p) => ({ ...p, date: dates[p.code] }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+    if (upcoming.length > 0) {
+      const label = lvl === "final" ? "CA Final" : "CA Inter";
+      setExamName(`${label} — ${upcoming[0].name}`);
+      setExamDate(upcoming[0].date);
+      if (profile?.daily_study_hours) setDailyHours(String(profile.daily_study_hours));
+      setPrefilled(true);
+    }
+  }, [examConfig, userPapers, profile, prefilled]);
 
   const generate = useMutation({
     mutationFn: async () => {
       if (!examName.trim()) throw new Error("Exam name required");
       if (!examDate) throw new Error("Exam date required");
       const hrs = Number(dailyHours);
-      if (!hrs || hrs < 0.5) throw new Error("Enter a valid daily hours");
+      if (!hrs || hrs < 0.5) throw new Error("Enter valid daily hours");
       return generateFn({
         data: {
           exam_name: examName.trim(),
           exam_date: examDate,
           preparation_level: level,
           daily_hours: hrs,
-          schedule_preference: schedule.trim() || null,
-          weak_subjects: weak.split(",").map((s) => s.trim()).filter(Boolean),
-          strong_subjects: strong.split(",").map((s) => s.trim()).filter(Boolean),
-          notes: notes.trim() || null,
+          weak_subjects: weak,
+          strong_subjects: strong,
+          study_style: style,
+          attempt: attempt.trim() || null,
+          coaching_hours: coachingHours ? Number(coachingHours) : null,
+          working,
+          preferred_slots: slots,
+          subjects_per_day:
+            subjectsPerDay === "auto" ? null : (Number(subjectsPerDay) as 1 | 2 | 3),
+          max_session_hours:
+            maxSession === "auto" ? null : (Number(maxSession) as 1 | 1.5 | 2),
+          revision_frequency:
+            revisionFreq === "auto"
+              ? null
+              : (revisionFreq as "daily" | "every_2_days" | "weekly"),
+          buffer_days: bufferDays ? Number(bufferDays) : null,
+          weekly_holiday:
+            weeklyHoliday === "auto"
+              ? null
+              : (weeklyHoliday as "sun" | "mon" | "tue" | "wed" | "thu" | "fri" | "sat"),
+          break_minutes:
+            breakMinutes === "auto" ? null : (Number(breakMinutes) as 15 | 30 | 45),
         },
       });
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["study-plans"] });
-      toast.success("Study plan generated");
+      toast.success("Your AI timetable is ready");
+      setStep(1);
     },
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const remove = useMutation({
-    mutationFn: (id: string) => deleteFn({ data: { id } }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["study-plans"] });
-      toast.success("Deleted");
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
-  const activate = useMutation({
-    mutationFn: (id: string) => activateFn({ data: { id } }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["study-plans"] });
-      toast.success("Plan activated");
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
+  const toggleSlot = (s: Slot) =>
+    setSlots((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]));
+  const toggleSubject = (
+    list: string[],
+    setList: (v: string[]) => void,
+    name: string,
+  ) => setList(list.includes(name) ? list.filter((x) => x !== name) : [...list, name]);
 
   return (
     <AppShell>
       <PageHeader
-        eyebrow="AI Study Planner"
-        title="Your exam. Your hours. A plan that fits."
-        description="Tell the AI your exam date, prep level, daily study hours, schedule, and weak subjects. Get a daily timetable plus weekly & monthly goals — saved to your account."
+        eyebrow="AI Timetable"
+        title="A smart study plan, built in under 2 minutes."
+        description="Answer a few quick questions. Our AI mentor plans the rest — balancing revision, mocks, weak subjects and rest days for you."
       />
 
-      <div className="grid gap-6 lg:grid-cols-[420px_1fr]">
-        <Card className="h-fit">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,480px)_1fr]">
+        <Card className="h-fit print:hidden">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Wand2 className="h-5 w-5 text-gold" /> Build my plan
+              <Wand2 className="h-5 w-5 text-gold" /> Build my timetable
             </CardTitle>
-            <CardDescription>Fill these in — takes ~30 seconds.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-              Exam & date auto-fill from your{" "}
-              <Link to="/calendar" className="text-gold hover:underline">Exam Calendar</Link>.
-              Edit there once and it syncs everywhere.
-            </div>
-            <div>
-              <Label>Exam</Label>
-              <Input value={examName} onChange={(e) => setExamName(e.target.value)} placeholder="CA Inter — Paper 1" />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label>Exam date</Label>
-                <Input type="date" value={examDate} onChange={(e) => setExamDate(e.target.value)} />
-              </div>
-              <div>
-                <Label>Daily hours</Label>
-                <Input
-                  type="number"
-                  step="0.5"
-                  min="0.5"
-                  max="16"
-                  value={dailyHours}
-                  onChange={(e) => setDailyHours(e.target.value)}
+            <CardDescription>Step {step} of 3</CardDescription>
+            <div className="mt-3 flex gap-1.5">
+              {[1, 2, 3].map((n) => (
+                <div
+                  key={n}
+                  className={`h-1.5 flex-1 rounded-full ${
+                    n <= step ? "bg-gold" : "bg-muted"
+                  }`}
                 />
+              ))}
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            {step === 1 && (
+              <div className="space-y-4">
+                <div className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                  Exam auto-fills from your{" "}
+                  <Link to="/calendar" className="text-gold hover:underline">
+                    Exam Calendar
+                  </Link>
+                  .
+                </div>
+                <div>
+                  <Label>Course & Paper</Label>
+                  <Input
+                    value={examName}
+                    onChange={(e) => setExamName(e.target.value)}
+                    placeholder="CA Inter — Paper 1"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label>Attempt</Label>
+                    <Input
+                      value={attempt}
+                      onChange={(e) => setAttempt(e.target.value)}
+                      placeholder="May 2026"
+                    />
+                  </div>
+                  <div>
+                    <Label>Exam date</Label>
+                    <Input
+                      type="date"
+                      value={examDate}
+                      onChange={(e) => setExamDate(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label>Preparation level</Label>
+                  <Select value={level} onValueChange={(v) => setLevel(v as typeof level)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {LEVELS.map((l) => (
+                        <SelectItem key={l.value} value={l.value}>
+                          {l.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label>Daily study hours</Label>
+                    <Input
+                      type="number"
+                      step="0.5"
+                      min="0.5"
+                      max="16"
+                      value={dailyHours}
+                      onChange={(e) => setDailyHours(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label>
+                      Coaching hrs/day{" "}
+                      <span className="text-muted-foreground">(optional)</span>
+                    </Label>
+                    <Input
+                      type="number"
+                      step="0.5"
+                      min="0"
+                      max="12"
+                      value={coachingHours}
+                      onChange={(e) => setCoachingHours(e.target.value)}
+                      placeholder="0"
+                    />
+                  </div>
+                </div>
+                <label className="flex items-center gap-2 text-sm">
+                  <Checkbox
+                    checked={working}
+                    onCheckedChange={(v) => setWorking(v === true)}
+                  />
+                  I'm working / in articleship
+                </label>
               </div>
-            </div>
-            <div>
-              <Label>Preparation level</Label>
-              <Select value={level} onValueChange={(v) => setLevel(v as typeof level)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {LEVELS.map((l) => (
-                    <SelectItem key={l.value} value={l.value}>
-                      {l.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Schedule preference</Label>
-              <Textarea
-                rows={2}
-                value={schedule}
-                onChange={(e) => setSchedule(e.target.value)}
-                placeholder="Morning person? Coaching hours? Job? Weekends free?"
-              />
-            </div>
-            <div>
-              <Label>Weak subjects <span className="text-muted-foreground">(comma-separated)</span></Label>
-              <Input value={weak} onChange={(e) => setWeak(e.target.value)} placeholder="FR, Costing" />
-            </div>
-            <div>
-              <Label>Strong subjects</Label>
-              <Input value={strong} onChange={(e) => setStrong(e.target.value)} placeholder="Audit, Tax" />
-            </div>
-            <div>
-              <Label>Anything else</Label>
-              <Textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Injuries, exam attempts, target percentile…" />
-            </div>
-            <Button
-              className="w-full gap-2"
-              onClick={() => generate.mutate()}
-              disabled={generate.isPending}
-            >
-              {generate.isPending ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" /> Building your plan…
-                </>
+            )}
+
+            {step === 2 && (
+              <div className="space-y-5">
+                <p className="text-xs text-muted-foreground">
+                  All fields are optional. Leave anything blank and the AI picks the best
+                  option for you.
+                </p>
+
+                <div>
+                  <Label className="mb-2 block">Preferred study slots</Label>
+                  <div className="space-y-1.5">
+                    {SLOTS.map((s) => (
+                      <label
+                        key={s.value}
+                        className="flex cursor-pointer items-center gap-2 rounded-md border border-border px-3 py-2 text-sm hover:bg-accent"
+                      >
+                        <Checkbox
+                          checked={slots.includes(s.value)}
+                          onCheckedChange={() => toggleSlot(s.value)}
+                        />
+                        {s.label}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <PrefSelect
+                    label="Subjects per day"
+                    value={subjectsPerDay}
+                    onChange={setSubjectsPerDay}
+                    options={[
+                      { value: "1", label: "1" },
+                      { value: "2", label: "2" },
+                      { value: "3", label: "3" },
+                    ]}
+                  />
+                  <PrefSelect
+                    label="Max continuous session"
+                    value={maxSession}
+                    onChange={setMaxSession}
+                    options={[
+                      { value: "1", label: "1 hr" },
+                      { value: "1.5", label: "1.5 hr" },
+                      { value: "2", label: "2 hr" },
+                    ]}
+                  />
+                  <PrefSelect
+                    label="Revision frequency"
+                    value={revisionFreq}
+                    onChange={setRevisionFreq}
+                    options={[
+                      { value: "daily", label: "Daily" },
+                      { value: "every_2_days", label: "Every 2 days" },
+                      { value: "weekly", label: "Weekly" },
+                    ]}
+                  />
+                  <PrefSelect
+                    label="Break duration"
+                    value={breakMinutes}
+                    onChange={setBreakMinutes}
+                    options={[
+                      { value: "15", label: "15 min" },
+                      { value: "30", label: "30 min" },
+                      { value: "45", label: "45 min" },
+                    ]}
+                  />
+                  <PrefSelect
+                    label="Weekly holiday"
+                    value={weeklyHoliday}
+                    onChange={setWeeklyHoliday}
+                    options={[
+                      { value: "sun", label: "Sunday" },
+                      { value: "mon", label: "Monday" },
+                      { value: "tue", label: "Tuesday" },
+                      { value: "wed", label: "Wednesday" },
+                      { value: "thu", label: "Thursday" },
+                      { value: "fri", label: "Friday" },
+                      { value: "sat", label: "Saturday" },
+                    ]}
+                  />
+                  <div>
+                    <Label>
+                      Buffer days{" "}
+                      <span className="text-muted-foreground">(pre-exam)</span>
+                    </Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      max="30"
+                      placeholder="AI decides"
+                      value={bufferDays}
+                      onChange={(e) => setBufferDays(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                {userPapers && userPapers.length > 0 && (
+                  <div className="grid gap-4">
+                    <SubjectPicker
+                      title="Weak subjects"
+                      papers={userPapers}
+                      selected={weak}
+                      onToggle={(n) => toggleSubject(weak, setWeak, n)}
+                    />
+                    <SubjectPicker
+                      title="Strong subjects"
+                      papers={userPapers}
+                      selected={strong}
+                      onToggle={(n) => toggleSubject(strong, setStrong, n)}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+
+            {step === 3 && (
+              <div className="space-y-3">
+                <p className="text-xs text-muted-foreground">
+                  Pick your planning strategy. The AI adapts everything else.
+                </p>
+                {STYLES.map((s) => {
+                  const selected = style === s.value;
+                  const Icon = s.icon;
+                  return (
+                    <button
+                      key={s.value}
+                      onClick={() => setStyle(s.value)}
+                      className={`w-full rounded-xl border p-4 text-left transition ${
+                        selected
+                          ? "border-gold bg-gold/5 ring-1 ring-gold/40"
+                          : "border-border hover:bg-accent"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Icon className="h-5 w-5 text-gold" />
+                        <span className="font-semibold">{s.title}</span>
+                        {s.badge && (
+                          <Badge variant="outline" className="ml-auto border-gold/40 text-gold">
+                            {s.badge}
+                          </Badge>
+                        )}
+                      </div>
+                      <ul className="mt-2 grid gap-1 text-xs text-muted-foreground">
+                        {s.points.map((p) => (
+                          <li key={p} className="flex items-center gap-1.5">
+                            <Check className="h-3 w-3 text-gold" /> {p}
+                          </li>
+                        ))}
+                      </ul>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            <div className="flex items-center justify-between gap-2 pt-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setStep((s) => Math.max(1, s - 1))}
+                disabled={step === 1 || generate.isPending}
+              >
+                <ChevronLeft className="h-4 w-4" /> Back
+              </Button>
+              {step < 3 ? (
+                <Button size="sm" onClick={() => setStep((s) => s + 1)}>
+                  Next <ChevronRight className="h-4 w-4" />
+                </Button>
               ) : (
-                <>
-                  <Sparkles className="h-4 w-4" /> Generate plan
-                </>
+                <Button
+                  onClick={() => generate.mutate()}
+                  disabled={generate.isPending}
+                  className="gap-2"
+                >
+                  {generate.isPending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" /> Building…
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-4 w-4" /> Generate AI Timetable
+                    </>
+                  )}
+                </Button>
               )}
-            </Button>
+            </div>
             {generate.isPending && (
               <div className="rounded-lg border border-gold/30 bg-gold/5 p-3 text-xs text-muted-foreground">
-                Reading ICAI syllabus, weightage, and your exam calendar. This usually takes 15–30 seconds.
+                Reading ICAI syllabus, weightage and your calendar. Usually 15–30 seconds.
               </div>
             )}
           </CardContent>
@@ -291,42 +579,18 @@ function StudyPlannerPage() {
 
         <div className="space-y-6">
           {isLoading ? (
-            <Card><CardContent className="py-16 text-center text-muted-foreground">Loading…</CardContent></Card>
+            <Card>
+              <CardContent className="py-16 text-center text-muted-foreground">
+                Loading…
+              </CardContent>
+            </Card>
           ) : !active ? (
             <EmptyState
-              title="No study plan yet"
-              body="Fill the form and generate your first AI-powered plan."
+              title="No timetable yet"
+              body="Answer the 3 quick steps to generate your first AI timetable."
             />
           ) : (
             <PlanView plan={active} />
-          )}
-
-          {plans && plans.length > 1 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Previous plans</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                {plans.filter((p) => p.id !== active?.id).map((p) => (
-                  <div key={p.id} className="flex items-center justify-between rounded-lg border border-border p-3">
-                    <div className="min-w-0">
-                      <div className="truncate font-medium">{p.exam_name}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {format(parseISO(p.exam_date), "MMM d, yyyy")} · {p.daily_hours}h/day · created {format(parseISO(p.created_at), "MMM d")}
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" onClick={() => activate.mutate(p.id)}>
-                        Activate
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => remove.mutate(p.id)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
           )}
         </div>
       </div>
@@ -334,185 +598,231 @@ function StudyPlannerPage() {
   );
 }
 
-function PlanView({ plan }: { plan: {
-  id: string;
-  exam_name: string;
-  exam_date: string;
-  daily_hours: number;
-  preparation_level: string;
-  strategy: string | null;
-  daily_timetable: unknown;
-  weekly_goals: unknown;
-  monthly_goals: unknown;
-  plan_days?: unknown;
-} }) {
+function PrefSelect({
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  options: { value: string; label: string }[];
+}) {
+  return (
+    <div>
+      <Label>{label}</Label>
+      <Select value={value} onValueChange={onChange}>
+        <SelectTrigger>
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="auto">Let AI decide</SelectItem>
+          {options.map((o) => (
+            <SelectItem key={o.value} value={o.value}>
+              {o.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
+
+function SubjectPicker({
+  title,
+  papers,
+  selected,
+  onToggle,
+}: {
+  title: string;
+  papers: { code: string; name: string }[];
+  selected: string[];
+  onToggle: (name: string) => void;
+}) {
+  return (
+    <div>
+      <Label className="mb-2 block">{title}</Label>
+      <div className="flex flex-wrap gap-2">
+        {papers.map((p) => {
+          const active = selected.includes(p.name);
+          return (
+            <button
+              key={p.code}
+              type="button"
+              onClick={() => onToggle(p.name)}
+              className={`rounded-full border px-3 py-1 text-xs transition ${
+                active
+                  ? "border-gold bg-gold/10 text-gold"
+                  : "border-border hover:bg-accent"
+              }`}
+            >
+              {p.name}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function PlanView({
+  plan,
+}: {
+  plan: {
+    id: string;
+    exam_name: string;
+    exam_date: string;
+    daily_hours: number;
+    preparation_level: string;
+    strategy: string | null;
+    daily_timetable: unknown;
+    weekly_goals: unknown;
+    monthly_goals: unknown;
+    plan_days?: unknown;
+  };
+}) {
   const weekly = (plan.weekly_goals as WeeklyGoal[]) ?? [];
   const monthly = (plan.monthly_goals as MonthlyGoal[]) ?? [];
+  const days = ((plan.plan_days as PlanDay[]) ?? []).slice().sort((a, b) =>
+    a.date.localeCompare(b.date),
+  );
+  const template = (plan.daily_timetable as TimetableBlock[]) ?? [];
   const daysLeft = Math.max(
     0,
     Math.ceil((new Date(plan.exam_date).getTime() - Date.now()) / 86400000),
   );
+
   const syncFn = useServerFn(syncPlanToTasks);
-  const updateFn = useServerFn(updateStudyPlan);
-  const regenerateDayFn = useServerFn(regenerateDay);
+  const regenFn = useServerFn(regenerateRemaining);
   const qc = useQueryClient();
 
-  const seedTemplate = (plan.daily_timetable as TimetableBlock[]) ?? [];
-  const seedDays = (plan.plan_days as PlanDay[]) ?? [];
-  const [days, setDays] = useState<PlanDay[]>(seedDays);
-  const [template, setTemplate] = useState<TimetableBlock[]>(seedTemplate);
-  const [activeDate, setActiveDate] = useState<string>(seedDays[0]?.date ?? new Date().toISOString().slice(0, 10));
-  const [saveState, setSaveState] = useState<"idle" | "dirty" | "saving" | "saved">("idle");
+  const today = new Date().toISOString().slice(0, 10);
+  const initialDate = days.find((d) => d.date >= today)?.date ?? days[0]?.date ?? today;
+  const [activeDate, setActiveDate] = useState(initialDate);
   const [regenBusy, setRegenBusy] = useState(false);
 
   useEffect(() => {
-    const nextDays = (plan.plan_days as PlanDay[]) ?? [];
-    setDays(nextDays);
-    setTemplate((plan.daily_timetable as TimetableBlock[]) ?? []);
-    setActiveDate((prev) => nextDays.find((d) => d.date === prev)?.date ?? nextDays[0]?.date ?? prev);
-    setSaveState("idle");
-  }, [plan.id, plan.plan_days, plan.daily_timetable]);
+    setActiveDate(initialDate);
+  }, [plan.id, initialDate]);
 
-  // Debounced autosave
-  useEffect(() => {
-    if (saveState !== "dirty") return;
-    const t = setTimeout(async () => {
-      setSaveState("saving");
-      try {
-        await updateFn({ data: { id: plan.id, plan_days: days, daily_timetable: template } });
-        setSaveState("saved");
-        qc.invalidateQueries({ queryKey: ["study-plans"] });
-        setTimeout(() => setSaveState((s) => (s === "saved" ? "idle" : s)), 1500);
-      } catch (e) {
-        setSaveState("dirty");
-        toast.error(e instanceof Error ? e.message : "Autosave failed");
-      }
-    }, 1500);
-    return () => clearTimeout(t);
-  }, [days, template, saveState, plan.id, updateFn, qc]);
-
-  const activeDay = useMemo(() => days.find((d) => d.date === activeDate) ?? null, [days, activeDate]);
-
-  const patchDay = (date: string, patch: Partial<PlanDay>) => {
-    setDays((prev) => prev.map((d) => (d.date === date ? { ...d, ...patch } : d)));
-    setSaveState("dirty");
-  };
-  const patchBlock = (date: string, i: number, patch: Partial<TimetableBlock>) => {
-    setDays((prev) =>
-      prev.map((d) =>
-        d.date === date ? { ...d, blocks: d.blocks.map((b, idx) => (idx === i ? { ...b, ...patch } : b)) } : d,
-      ),
-    );
-    setSaveState("dirty");
-  };
-  const deleteBlock = (date: string, i: number) => {
-    setDays((prev) => prev.map((d) => (d.date === date ? { ...d, blocks: d.blocks.filter((_, idx) => idx !== i) } : d)));
-    setSaveState("dirty");
-  };
-  const addBlock = (date: string) => {
-    setDays((prev) =>
-      prev.map((d) => {
-        if (d.date !== date) return d;
-        const last = d.blocks[d.blocks.length - 1];
-        const start = last?.end ?? "09:00";
-        const [h, m] = start.split(":").map(Number);
-        const end = `${String(Math.min(23, (h ?? 9) + 1)).padStart(2, "0")}:${String(m ?? 0).padStart(2, "0")}`;
-        return {
-          ...d,
-          blocks: [...d.blocks, { start, end, subject: "New block", activity: "", focus_area: null }],
-        };
-      }),
-    );
-    setSaveState("dirty");
-  };
-  const moveBlockInDay = (date: string, i: number, dir: -1 | 1) => {
-    setDays((prev) =>
-      prev.map((d) => {
-        if (d.date !== date) return d;
-        const next = [...d.blocks];
-        const j = i + dir;
-        if (j < 0 || j >= next.length) return d;
-        [next[i], next[j]] = [next[j], next[i]];
-        return { ...d, blocks: next };
-      }),
-    );
-    setSaveState("dirty");
-  };
-  const moveBlockToDay = (fromDate: string, i: number, toDate: string) => {
-    if (fromDate === toDate) return;
-    setDays((prev) => {
-      const from = prev.find((d) => d.date === fromDate);
-      const block = from?.blocks[i];
-      if (!block) return prev;
-      return prev.map((d) => {
-        if (d.date === fromDate) return { ...d, blocks: d.blocks.filter((_, idx) => idx !== i) };
-        if (d.date === toDate) return { ...d, blocks: [...d.blocks, block] };
-        return d;
-      });
-    });
-    setSaveState("dirty");
-  };
-
-  const doRegenerateDay = async () => {
-    if (!activeDay) return;
-    setRegenBusy(true);
-    try {
-      const res = await regenerateDayFn({ data: { plan_id: plan.id, date: activeDay.date } });
-      setDays((prev) =>
-        prev.map((d) => (d.date === activeDay.date ? { ...d, type: "study", blocks: res.blocks } : d)),
-      );
-      toast.success("Day regenerated");
-      qc.invalidateQueries({ queryKey: ["study-plans"] });
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Could not regenerate this day");
-    } finally {
-      setRegenBusy(false);
-    }
-  };
+  const activeDay = days.find((d) => d.date === activeDate) ?? null;
 
   const sync = useMutation({
     mutationFn: (d: number) => syncFn({ data: { plan_id: plan.id, days: d } }),
     onSuccess: (res) => {
       qc.invalidateQueries({ queryKey: ["tasks"] });
-      toast.success(`Added ${res.inserted} tasks across ${res.days} days`, {
-        action: { label: "Open Planner", onClick: () => { window.location.href = "/planner"; } },
+      toast.success(`Synced ${res.inserted} sessions across ${res.days} days`, {
+        action: {
+          label: "Open Planner",
+          onClick: () => {
+            window.location.href = "/planner";
+          },
+        },
       });
     },
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const doRegenerate = async () => {
+    setRegenBusy(true);
+    try {
+      await regenFn({ data: { plan_id: plan.id } });
+      toast.success("Timetable regenerated for the remaining days");
+      qc.invalidateQueries({ queryKey: ["study-plans"] });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not regenerate");
+    } finally {
+      setRegenBusy(false);
+    }
+  };
+
   const dayTypeColor = (t: PlanDayType) =>
-    t === "holiday" ? "bg-destructive/15 text-destructive"
-    : t === "buffer" ? "bg-muted text-muted-foreground"
-    : t === "revision" ? "bg-gold/15 text-gold"
-    : "bg-primary/10 text-primary";
+    t === "holiday"
+      ? "bg-destructive/15 text-destructive"
+      : t === "buffer"
+        ? "bg-muted text-muted-foreground"
+        : t === "revision"
+          ? "bg-gold/15 text-gold"
+          : "bg-primary/10 text-primary";
+
+  // Weekly view = current week (Mon-Sun) around activeDate
+  const weekStart = startOfWeek(parseISO(activeDate), { weekStartsOn: 1 });
+  const weekDates = Array.from({ length: 7 }, (_, i) =>
+    format(addDays(weekStart, i), "yyyy-MM-dd"),
+  );
+
+  // Monthly view = by month bucket
+  const byMonth = useMemo(() => {
+    const m = new Map<string, PlanDay[]>();
+    for (const d of days) {
+      const key = d.date.slice(0, 7);
+      const arr = m.get(key) ?? [];
+      arr.push(d);
+      m.set(key, arr);
+    }
+    return Array.from(m.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+  }, [days]);
 
   return (
-    <Card>
+    <Card className="print:border-0 print:shadow-none">
       <CardHeader>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-gold">
-              <Star className="h-3.5 w-3.5" /> Active plan
+              <Star className="h-3.5 w-3.5" /> Active timetable
             </div>
             <CardTitle className="mt-1">{plan.exam_name}</CardTitle>
             <CardDescription className="mt-1 flex flex-wrap gap-3">
-              <span className="inline-flex items-center gap-1"><CalendarDays className="h-3.5 w-3.5" />{format(parseISO(plan.exam_date), "EEE, MMM d, yyyy")} · {daysLeft} days left</span>
+              <span className="inline-flex items-center gap-1">
+                <CalendarDays className="h-3.5 w-3.5" />
+                {format(parseISO(plan.exam_date), "EEE, MMM d, yyyy")} · {daysLeft} days left
+              </span>
               <span>·</span>
               <span>{plan.daily_hours}h/day</span>
               <span>·</span>
               <span className="capitalize">{plan.preparation_level}</span>
             </CardDescription>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => sync.mutate(1)} disabled={sync.isPending} className="gap-1.5">
-              <ListChecks className="h-4 w-4" /> Sync today
+          <div className="flex flex-wrap items-center gap-2 print:hidden">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => sync.mutate(7)}
+              disabled={sync.isPending}
+              className="gap-1.5"
+            >
+              <ListChecks className="h-4 w-4" /> Sync to Planner
             </Button>
-            <Button size="sm" onClick={() => sync.mutate(7)} disabled={sync.isPending} className="gap-1.5">
-              <ListChecks className="h-4 w-4" /> Sync 7 days → Planner
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => sync.mutate(1)}
+              disabled={sync.isPending}
+              className="gap-1.5"
+            >
+              <ListChecks className="h-4 w-4" /> Sync to Dashboard
             </Button>
-            <Button asChild variant="ghost" size="sm">
-              <Link to="/planner">Open Planner</Link>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => window.print()}
+              className="gap-1.5"
+            >
+              <Download className="h-4 w-4" /> PDF
+            </Button>
+            <Button
+              size="sm"
+              onClick={doRegenerate}
+              disabled={regenBusy}
+              className="gap-1.5"
+            >
+              {regenBusy ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <RefreshCw className="h-4 w-4" />
+              )}
+              Regenerate remaining
             </Button>
           </div>
         </div>
@@ -520,46 +830,45 @@ function PlanView({ plan }: { plan: {
       <CardContent>
         {plan.strategy && (
           <div className="mb-6 rounded-xl border border-border bg-muted/40 p-4">
-            <div className="mb-1 text-xs uppercase tracking-wider text-muted-foreground">Strategy</div>
+            <div className="mb-1 text-xs uppercase tracking-wider text-muted-foreground">
+              Strategy
+            </div>
             <p className="text-sm leading-relaxed">{plan.strategy}</p>
           </div>
         )}
 
-        <Tabs defaultValue="schedule">
+        <Tabs defaultValue="daily">
           <TabsList>
-            <TabsTrigger value="schedule">Schedule</TabsTrigger>
-            <TabsTrigger value="template">Daily template</TabsTrigger>
-            <TabsTrigger value="weekly">Weekly goals</TabsTrigger>
-            <TabsTrigger value="monthly">Monthly goals</TabsTrigger>
+            <TabsTrigger value="daily">Daily</TabsTrigger>
+            <TabsTrigger value="weekly">Weekly</TabsTrigger>
+            <TabsTrigger value="monthly">Monthly</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="schedule" className="mt-4">
-            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-              <div className="text-xs text-muted-foreground">
-                Pick a day, edit blocks, mark holidays or revision. Changes autosave.
-              </div>
-              <SaveIndicator state={saveState} />
-            </div>
-
+          <TabsContent value="daily" className="mt-4 space-y-4">
             {days.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No per-day schedule. Regenerate the plan to build one.</p>
+              <TemplateList blocks={template} />
             ) : (
               <>
-                {/* Horizontal day picker */}
-                <div className="mb-4 -mx-2 overflow-x-auto px-2 pb-2">
+                <div className="-mx-2 overflow-x-auto px-2 pb-2 print:hidden">
                   <div className="flex gap-2">
-                    {days.map((d) => {
+                    {days.slice(0, 30).map((d) => {
                       const active = d.date === activeDate;
                       return (
                         <button
                           key={d.date}
                           onClick={() => setActiveDate(d.date)}
                           className={`shrink-0 rounded-lg border px-3 py-2 text-left text-xs transition ${
-                            active ? "border-gold bg-gold/10" : "border-border hover:bg-accent"
+                            active
+                              ? "border-gold bg-gold/10"
+                              : "border-border hover:bg-accent"
                           }`}
                         >
-                          <div className="font-mono">{format(parseISO(d.date), "EEE d")}</div>
-                          <div className={`mt-1 inline-flex rounded px-1.5 py-0.5 text-[10px] uppercase ${dayTypeColor(d.type)}`}>
+                          <div className="font-mono">
+                            {format(parseISO(d.date), "EEE d")}
+                          </div>
+                          <div
+                            className={`mt-1 inline-flex rounded px-1.5 py-0.5 text-[10px] uppercase ${dayTypeColor(d.type)}`}
+                          >
                             {d.type}
                           </div>
                         </button>
@@ -567,163 +876,121 @@ function PlanView({ plan }: { plan: {
                     })}
                   </div>
                 </div>
-
-                {activeDay && (
-                  <div className="space-y-4">
-                    {/* Day header controls */}
-                    <div className="grid gap-3 rounded-lg border border-border p-3 sm:grid-cols-2 lg:grid-cols-4">
-                      <div>
-                        <Label className="text-xs">Day type</Label>
-                        <Select value={activeDay.type} onValueChange={(v) => patchDay(activeDay.date, { type: v as PlanDayType })}>
-                          <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="study">Study</SelectItem>
-                            <SelectItem value="revision">Revision</SelectItem>
-                            <SelectItem value="buffer">Buffer</SelectItem>
-                            <SelectItem value="holiday">Holiday</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label className="text-xs">Wake</Label>
-                        <Input type="time" className="h-8" value={activeDay.wake ?? ""} onChange={(e) => patchDay(activeDay.date, { wake: e.target.value || null })} />
-                      </div>
-                      <div>
-                        <Label className="text-xs">Sleep</Label>
-                        <Input type="time" className="h-8" value={activeDay.sleep ?? ""} onChange={(e) => patchDay(activeDay.date, { sleep: e.target.value || null })} />
-                      </div>
-                      <div className="flex items-end gap-2">
-                        <Button size="sm" variant="outline" className="gap-1.5" onClick={doRegenerateDay} disabled={regenBusy}>
-                          {regenBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />} Regenerate
-                        </Button>
-                      </div>
-                      <div className="sm:col-span-2 lg:col-span-4">
-                        <Label className="text-xs">Note</Label>
-                        <Input className="h-8" value={activeDay.note ?? ""} onChange={(e) => patchDay(activeDay.date, { note: e.target.value || null })} placeholder="e.g. Coaching class, exam form deadline…" />
-                      </div>
-                    </div>
-
-                    {activeDay.type === "holiday" ? (
-                      <div className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-                        Marked as holiday — no study blocks will sync to your planner for this day.
-                      </div>
-                    ) : (
-                      <>
-                        <ul className="space-y-2">
-                          {activeDay.blocks.map((b, i) => (
-                            <li key={i} className="rounded-lg border border-border p-3 sm:flex sm:items-start sm:gap-3">
-                              <div className="flex items-center gap-2 sm:w-32 sm:shrink-0">
-                                <Input type="time" value={b.start} onChange={(e) => patchBlock(activeDay.date, i, { start: e.target.value })} className="h-8 px-2 font-mono text-xs" />
-                                <span className="text-muted-foreground">–</span>
-                                <Input type="time" value={b.end} onChange={(e) => patchBlock(activeDay.date, i, { end: e.target.value })} className="h-8 px-2 font-mono text-xs" />
-                              </div>
-                              <div className="mt-2 min-w-0 flex-1 space-y-1 sm:mt-0">
-                                <Input value={b.subject} onChange={(e) => patchBlock(activeDay.date, i, { subject: e.target.value })} placeholder="Subject / paper" className="h-8 font-medium" />
-                                <Input value={b.activity} onChange={(e) => patchBlock(activeDay.date, i, { activity: e.target.value })} placeholder="Activity (e.g. Practice MCQs)" className="h-8 text-sm" />
-                                <Input value={b.focus_area ?? ""} onChange={(e) => patchBlock(activeDay.date, i, { focus_area: e.target.value || null })} placeholder="Chapter / focus area" className="h-8 text-xs" />
-                              </div>
-                              <div className="mt-2 flex flex-wrap items-center justify-end gap-1 sm:mt-0 sm:flex-col">
-                                <div className="flex gap-1">
-                                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => moveBlockInDay(activeDay.date, i, -1)} disabled={i === 0} aria-label="Move up">↑</Button>
-                                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => moveBlockInDay(activeDay.date, i, 1)} disabled={i === activeDay.blocks.length - 1} aria-label="Move down">↓</Button>
-                                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => deleteBlock(activeDay.date, i)} aria-label="Delete">
-                                    <Trash2 className="h-3.5 w-3.5" />
-                                  </Button>
-                                </div>
-                                <Select value="" onValueChange={(v) => moveBlockToDay(activeDay.date, i, v)}>
-                                  <SelectTrigger className="h-7 gap-1 text-xs">
-                                    <MoveRight className="h-3 w-3" /> <SelectValue placeholder="Move to…" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {days.filter((d) => d.date !== activeDay.date).slice(0, 30).map((d) => (
-                                      <SelectItem key={d.date} value={d.date}>{format(parseISO(d.date), "EEE, MMM d")}</SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                            </li>
-                          ))}
-                        </ul>
-                        <Button variant="outline" size="sm" className="gap-1.5" onClick={() => addBlock(activeDay.date)}>
-                          <Plus className="h-4 w-4" /> Add block
-                        </Button>
-                      </>
-                    )}
-                  </div>
-                )}
+                {activeDay && <DayCard day={activeDay} />}
               </>
             )}
           </TabsContent>
 
-          <TabsContent value="template" className="mt-4">
-            <div className="mb-3 flex items-center justify-between gap-2">
-              <div className="text-xs text-muted-foreground">Default daily template (used when a day has no blocks).</div>
-              <SaveIndicator state={saveState} />
-            </div>
-            {template.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No template blocks.</p>
-            ) : (
-              <ul className="space-y-2">
-                {template.map((b, i) => (
-                  <li key={i} className="rounded-lg border border-border p-3 sm:flex sm:items-start sm:gap-3">
-                    <div className="flex items-center gap-2 sm:w-32 sm:shrink-0">
-                      <Input type="time" value={b.start} onChange={(e) => { setTemplate((p) => p.map((x, idx) => idx === i ? { ...x, start: e.target.value } : x)); setSaveState("dirty"); }} className="h-8 px-2 font-mono text-xs" />
-                      <span className="text-muted-foreground">–</span>
-                      <Input type="time" value={b.end} onChange={(e) => { setTemplate((p) => p.map((x, idx) => idx === i ? { ...x, end: e.target.value } : x)); setSaveState("dirty"); }} className="h-8 px-2 font-mono text-xs" />
-                    </div>
-                    <div className="mt-2 min-w-0 flex-1 space-y-1 sm:mt-0">
-                      <Input value={b.subject} onChange={(e) => { setTemplate((p) => p.map((x, idx) => idx === i ? { ...x, subject: e.target.value } : x)); setSaveState("dirty"); }} className="h-8 font-medium" />
-                      <Input value={b.activity} onChange={(e) => { setTemplate((p) => p.map((x, idx) => idx === i ? { ...x, activity: e.target.value } : x)); setSaveState("dirty"); }} className="h-8 text-sm" />
-                    </div>
-                    <Button variant="ghost" size="icon" className="mt-2 h-7 w-7 text-destructive sm:mt-0" onClick={() => { setTemplate((p) => p.filter((_, idx) => idx !== i)); setSaveState("dirty"); }}>
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </TabsContent>
-
           <TabsContent value="weekly" className="mt-4 space-y-3">
-            {weekly.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No weekly goals generated.</p>
-            ) : (
-              weekly.map((w) => (
-                <div key={w.week} className="rounded-lg border border-border p-4">
-                  <div className="mb-2 flex items-center gap-2">
-                    <Badge>Week {w.week}</Badge>
-                    <div className="font-medium">{w.label}</div>
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              {weekDates.map((iso) => {
+                const d = days.find((x) => x.date === iso);
+                return (
+                  <div
+                    key={iso}
+                    className="rounded-lg border border-border p-3 text-sm"
+                  >
+                    <div className="mb-2 flex items-center justify-between">
+                      <div className="font-medium">
+                        {format(parseISO(iso), "EEE, MMM d")}
+                      </div>
+                      {d && (
+                        <span
+                          className={`rounded px-1.5 py-0.5 text-[10px] uppercase ${dayTypeColor(d.type)}`}
+                        >
+                          {d.type}
+                        </span>
+                      )}
+                    </div>
+                    {d && d.blocks.length > 0 ? (
+                      <ul className="space-y-1 text-xs">
+                        {d.blocks.map((b, i) => (
+                          <li key={i} className="flex gap-2">
+                            <span className="font-mono text-muted-foreground">
+                              {b.start}
+                            </span>
+                            <span className="truncate">{b.subject}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">
+                        {d?.type === "holiday" ? "Holiday" : "No sessions"}
+                      </p>
+                    )}
                   </div>
-                  <ul className="space-y-1 text-sm">
-                    {w.goals.map((g, i) => (
-                      <li key={i} className="flex items-start gap-2">
-                        <Target className="mt-0.5 h-4 w-4 shrink-0 text-gold" />
-                        <span>{g}</span>
-                      </li>
-                    ))}
-                  </ul>
+                );
+              })}
+            </div>
+
+            {weekly.length > 0 && (
+              <div className="mt-4 space-y-3">
+                <div className="text-xs uppercase tracking-wider text-muted-foreground">
+                  Weekly goals
                 </div>
-              ))
+                {weekly.map((w) => (
+                  <div
+                    key={w.week}
+                    className="rounded-lg border border-border p-4"
+                  >
+                    <div className="mb-2 flex items-center gap-2">
+                      <Badge>Week {w.week}</Badge>
+                      <div className="font-medium">{w.label}</div>
+                    </div>
+                    <ul className="space-y-1 text-sm">
+                      {w.goals.map((g, i) => (
+                        <li key={i} className="flex items-start gap-2">
+                          <Target className="mt-0.5 h-4 w-4 shrink-0 text-gold" />
+                          <span>{g}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
             )}
           </TabsContent>
 
-          <TabsContent value="monthly" className="mt-4 space-y-3">
-            {monthly.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No monthly goals generated.</p>
-            ) : (
-              monthly.map((m, i) => (
-                <div key={i} className="rounded-lg border border-border p-4">
-                  <div className="mb-2 font-display text-lg font-semibold">{m.month}</div>
-                  <ul className="space-y-1 text-sm">
-                    {m.goals.map((g, j) => (
-                      <li key={j} className="flex items-start gap-2">
-                        <Target className="mt-0.5 h-4 w-4 shrink-0 text-gold" />
-                        <span>{g}</span>
-                      </li>
-                    ))}
-                  </ul>
+          <TabsContent value="monthly" className="mt-4 space-y-4">
+            {byMonth.map(([key, ds]) => (
+              <div key={key} className="rounded-lg border border-border p-4">
+                <div className="mb-2 font-display text-lg font-semibold">
+                  {format(parseISO(`${key}-01`), "MMMM yyyy")}
                 </div>
-              ))
+                <div className="grid grid-cols-7 gap-1 text-center text-[11px]">
+                  {ds.map((d) => (
+                    <div
+                      key={d.date}
+                      className={`rounded p-1.5 ${dayTypeColor(d.type)}`}
+                      title={`${d.date} · ${d.type}`}
+                    >
+                      {format(parseISO(d.date), "d")}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+            {monthly.length > 0 && (
+              <div className="space-y-3">
+                <div className="text-xs uppercase tracking-wider text-muted-foreground">
+                  Monthly milestones
+                </div>
+                {monthly.map((m, i) => (
+                  <div key={i} className="rounded-lg border border-border p-4">
+                    <div className="mb-2 font-display text-lg font-semibold">
+                      {m.month}
+                    </div>
+                    <ul className="space-y-1 text-sm">
+                      {m.goals.map((g, j) => (
+                        <li key={j} className="flex items-start gap-2">
+                          <Target className="mt-0.5 h-4 w-4 shrink-0 text-gold" />
+                          <span>{g}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
             )}
           </TabsContent>
         </Tabs>
@@ -732,12 +999,69 @@ function PlanView({ plan }: { plan: {
   );
 }
 
-function SaveIndicator({ state }: { state: "idle" | "dirty" | "saving" | "saved" }) {
+function DayCard({ day }: { day: PlanDay }) {
+  if (day.type === "holiday") {
+    return (
+      <div className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+        Marked as holiday — rest day.
+      </div>
+    );
+  }
+  if (day.blocks.length === 0) {
+    return (
+      <div className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+        No sessions scheduled.
+      </div>
+    );
+  }
   return (
-    <div className="flex items-center gap-2 text-xs">
-      {state === "saving" && <span className="inline-flex items-center gap-1 text-muted-foreground"><Loader2 className="h-3 w-3 animate-spin" /> Saving…</span>}
-      {state === "saved" && <span className="inline-flex items-center gap-1 text-green-600"><Check className="h-3 w-3" /> Saved</span>}
-      {state === "dirty" && <span className="text-muted-foreground">Unsaved changes…</span>}
-    </div>
+    <ul className="space-y-2">
+      {day.blocks.map((b, i) => (
+        <li
+          key={i}
+          className="flex items-start gap-3 rounded-lg border border-border p-3"
+        >
+          <div className="w-24 shrink-0 font-mono text-xs text-muted-foreground">
+            {b.start}–{b.end}
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="font-medium">{b.subject}</div>
+            <div className="text-sm text-muted-foreground">{b.activity}</div>
+            {b.focus_area && (
+              <div className="mt-0.5 text-xs text-gold">{b.focus_area}</div>
+            )}
+          </div>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function TemplateList({ blocks }: { blocks: TimetableBlock[] }) {
+  if (blocks.length === 0) {
+    return (
+      <p className="text-sm text-muted-foreground">No sessions available.</p>
+    );
+  }
+  return (
+    <ul className="space-y-2">
+      {blocks.map((b, i) => (
+        <li
+          key={i}
+          className="flex items-start gap-3 rounded-lg border border-border p-3"
+        >
+          <div className="w-24 shrink-0 font-mono text-xs text-muted-foreground">
+            {b.start}–{b.end}
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="font-medium">{b.subject}</div>
+            <div className="text-sm text-muted-foreground">{b.activity}</div>
+            {b.focus_area && (
+              <div className="mt-0.5 text-xs text-gold">{b.focus_area}</div>
+            )}
+          </div>
+        </li>
+      ))}
+    </ul>
   );
 }
