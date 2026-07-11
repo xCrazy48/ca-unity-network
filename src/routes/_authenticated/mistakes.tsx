@@ -251,22 +251,18 @@ function Stat({ label, value, accent }: { label: string; value: number; accent?:
 function MistakeForm({
   onDone,
   papers,
-  chapters,
 }: {
   onDone: () => void;
   papers: Tables<"papers">[];
-  chapters: Tables<"chapters">[];
 }) {
   const qc = useQueryClient();
   const [source, setSource] = useState<string>("module");
   const [paperCode, setPaperCode] = useState<string>("");
-  const [chapterId, setChapterId] = useState<string>("");
+  const [topic, setTopic] = useState("");
   const [concept, setConcept] = useState("");
   const [mistake, setMistake] = useState("");
   const [correction, setCorrection] = useState("");
   const [sourceRef, setSourceRef] = useState("");
-
-  const filteredChapters = chapters.filter((c) => !paperCode || c.paper_code === paperCode);
 
   const save = useMutation({
     mutationFn: async () => {
@@ -274,12 +270,13 @@ function MistakeForm({
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) throw new Error("Not signed in");
+      const conceptText = topic ? (concept ? `${topic} — ${concept}` : topic) : concept;
       const { error } = await supabase.from("mistakes").insert({
         user_id: user.id,
         source: source as Tables<"mistakes">["source"],
         paper_code: paperCode || null,
-        chapter_id: chapterId || null,
-        concept,
+        chapter_id: null,
+        concept: conceptText,
         mistake,
         correction: correction || null,
         source_ref: sourceRef || null,
@@ -324,36 +321,28 @@ function MistakeForm({
             />
           </Field>
         </div>
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="Paper">
-            <Select value={paperCode} onValueChange={(v) => { setPaperCode(v); setChapterId(""); }}>
-              <SelectTrigger>
-                <SelectValue placeholder="Optional" />
-              </SelectTrigger>
-              <SelectContent>
-                {papers.map((p) => (
-                  <SelectItem key={p.code} value={p.code}>
-                    {p.code}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Field>
-          <Field label="Chapter">
-            <Select value={chapterId} onValueChange={setChapterId} disabled={!paperCode}>
-              <SelectTrigger>
-                <SelectValue placeholder="Optional" />
-              </SelectTrigger>
-              <SelectContent>
-                {filteredChapters.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Field>
-        </div>
+        <Field label="Paper">
+          <Select value={paperCode} onValueChange={setPaperCode}>
+            <SelectTrigger>
+              <SelectValue placeholder="Optional" />
+            </SelectTrigger>
+            <SelectContent>
+              {papers.map((p) => (
+                <SelectItem key={p.code} value={p.code}>
+                  {p.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Field>
+        <Field label="Topic">
+          <Input
+            value={topic}
+            onChange={(e) => setTopic(e.target.value)}
+            placeholder="e.g. Ind AS 12 — Deferred Tax"
+          />
+        </Field>
+
         <Field label="Concept">
           <Input
             value={concept}
