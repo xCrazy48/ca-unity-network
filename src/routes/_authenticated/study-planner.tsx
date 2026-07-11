@@ -336,7 +336,7 @@ function PlanView({ plan }: { plan: {
   weekly_goals: unknown;
   monthly_goals: unknown;
 } }) {
-  const timetable = (plan.daily_timetable as TimetableBlock[]) ?? [];
+  const initialTimetable = (plan.daily_timetable as TimetableBlock[]) ?? [];
   const weekly = (plan.weekly_goals as WeeklyGoal[]) ?? [];
   const monthly = (plan.monthly_goals as MonthlyGoal[]) ?? [];
   const daysLeft = Math.max(
@@ -344,7 +344,64 @@ function PlanView({ plan }: { plan: {
     Math.ceil((new Date(plan.exam_date).getTime() - Date.now()) / 86400000),
   );
   const syncFn = useServerFn(syncPlanToTasks);
+  const updateFn = useServerFn(updateStudyPlan);
   const qc = useQueryClient();
+
+  const [timetable, setTimetable] = useState<TimetableBlock[]>(initialTimetable);
+  const [saveState, setSaveState] = useState<"idle" | "dirty" | "saving" | "saved">("idle");
+
+  // Reset when a different plan loads
+  useEffect(() => {
+    setTimetable((plan.daily_timetable as TimetableBlock[]) ?? []);
+    setSaveState("idle");
+  }, [plan.id, plan.daily_timetable]);
+
+  // Autosave after 1.5s of no changes
+  useEffect(() => {
+    if (saveState !== "dirty") return;
+    const t = setTimeout(async () => {
+      setSaveState("saving");
+      try {
+        await updateFn({ data: { id: plan.id, daily_timetable: timetable } });
+        setSaveState("saved");
+        qc.invalidateQueries({ queryKey: ["study-plans"] });
+        setTimeout(() => setSaveState((s) => (s === "saved" ? "idle" : s)), 1500);
+      } catch (e) {
+        setSaveState("dirty");
+        toast.error(e instanceof Error ? e.message : "Autosave failed");
+      }
+    }, 1500);
+    return () => clearTimeout(t);
+  }, [timetable, saveState, plan.id, updateFn, qc]);
+
+  const editBlock = (i: number, patch: Partial<TimetableBlock>) => {
+    setTimetable((prev) => prev.map((b, idx) => (idx === i ? { ...b, ...patch } : b)));
+    setSaveState("dirty");
+  };
+  const deleteBlock = (i: number) => {
+    setTimetable((prev) => prev.filter((_, idx) => idx !== i));
+    setSaveState("dirty");
+  };
+  const addBlock = () => {
+    const last = timetable[timetable.length - 1];
+    const start = last?.end ?? "09:00";
+    const [h, m] = start.split(":").map(Number);
+    const endH = Math.min(23, (h ?? 9) + 1);
+    const end = `${String(endH).padStart(2, "0")}:${String(m ?? 0).padStart(2, "0")}`;
+    setTimetable((prev) => [...prev, { start, end, subject: "New block", activity: "", focus_area: null }]);
+    setSaveState("dirty");
+  };
+  const moveBlock = (i: number, dir: -1 | 1) => {
+    setTimetable((prev) => {
+      const next = [...prev];
+      const j = i + dir;
+      if (j < 0 || j >= next.length) return prev;
+      [next[i], next[j]] = [next[j], next[i]];
+      return next;
+    });
+    setSaveState("dirty");
+  };
+
   const sync = useMutation({
     mutationFn: (days: number) => syncFn({ data: { plan_id: plan.id, days } }),
     onSuccess: (res) => {
