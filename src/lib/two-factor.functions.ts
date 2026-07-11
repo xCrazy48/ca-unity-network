@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuthWithMfa } from "@/integrations/supabase/require-mfa";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 // Generate a random human-friendly recovery code (10 chars, dashes for readability).
 function randomCode(): string {
@@ -18,7 +18,7 @@ async function sha256Hex(input: string): Promise<string> {
 
 // Regenerate the user's 10 recovery codes. Returns the plaintext codes exactly once.
 export const generateRecoveryCodes = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuthWithMfa])
+  .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const codes = Array.from({ length: 10 }, () => randomCode());
     const rows = await Promise.all(
@@ -41,7 +41,7 @@ export const generateRecoveryCodes = createServerFn({ method: "POST" })
 
 // Consume a recovery code. Returns whether it was valid (and marks used).
 export const consumeRecoveryCode = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuthWithMfa])
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: { code: string }) => {
     if (!d?.code || typeof d.code !== "string") throw new Error("Invalid code");
     return { code: d.code.trim().toUpperCase() };
@@ -68,7 +68,7 @@ export const consumeRecoveryCode = createServerFn({ method: "POST" })
 
 // Flip the two_factor_enabled flag in user_settings after Supabase MFA verify succeeds client-side.
 export const setTwoFactorFlag = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuthWithMfa])
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: { enabled: boolean }) => ({ enabled: !!d?.enabled }))
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase
