@@ -240,3 +240,36 @@ export const syncPlanToTasks = createServerFn({ method: "POST" })
     return { inserted: rows.length, days: data.days };
   });
 
+const TimetableBlockSchema = z.object({
+  start: z.string(),
+  end: z.string(),
+  subject: z.string(),
+  activity: z.string(),
+  focus_area: z.string().nullable(),
+});
+
+const UpdatePlanInput = z.object({
+  id: z.string().uuid(),
+  daily_timetable: z.array(TimetableBlockSchema).optional(),
+  strategy: z.string().max(2000).optional(),
+  daily_hours: z.number().min(0.5).max(16).optional(),
+});
+
+export const updateStudyPlan = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((v: unknown) => UpdatePlanInput.parse(v))
+  .handler(async ({ context, data }) => {
+    const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+    if (data.daily_timetable) patch.daily_timetable = data.daily_timetable;
+    if (data.strategy !== undefined) patch.strategy = data.strategy;
+    if (data.daily_hours !== undefined) patch.daily_hours = data.daily_hours;
+    const { error } = await context.supabase
+      .from("study_plans")
+      .update(patch)
+      .eq("id", data.id)
+      .eq("user_id", context.userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+
