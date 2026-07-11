@@ -83,6 +83,13 @@ export const generateStudyPlan = createServerFn({ method: "POST" })
     const group = ((profile?.exam_group as string) || "both") as "group_1" | "group_2" | "both";
     const syllabus = await loadSyllabus(context.supabase, level, group);
 
+    const hasChapters = syllabus.some((p) => p.chapters.length > 0);
+    if (syllabus.length === 0 || !hasChapters) {
+      throw new Error(
+        "ICAI New Scheme syllabus data is missing for your papers. Please open Exam Calendar and select your level & group, then try again. If the problem persists, contact support.",
+      );
+    }
+
     const plan = await generateStudyPlanWithAi(
       { ...data, student_level: level, student_group: group, syllabus },
       key,
