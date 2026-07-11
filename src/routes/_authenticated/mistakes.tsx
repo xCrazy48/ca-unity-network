@@ -121,17 +121,11 @@ function MistakesPage() {
             <MistakeForm
               onDone={() => setOpen(false)}
               papers={papers ?? []}
-              chapters={chapters ?? []}
             />
           </Dialog>
         }
       />
 
-      <div className="mb-6 grid gap-3 sm:grid-cols-3">
-        <Stat label="Open" value={mistakes?.filter(m => m.status === "open").length ?? 0} />
-        <Stat label="Due for review" value={dueToday} accent />
-        <Stat label="Resolved" value={mistakes?.filter(m => m.status === "resolved").length ?? 0} />
-      </div>
 
       <div className="mb-6 flex flex-wrap items-center gap-3">
         <Tabs value={tab} onValueChange={setTab}>
