@@ -864,6 +864,7 @@ export type Database = {
           is_active: boolean
           monthly_goals: Json
           notes: string | null
+          plan_days: Json | null
           preparation_level: string
           schedule_preference: string | null
           strategy: string | null
@@ -883,6 +884,7 @@ export type Database = {
           is_active?: boolean
           monthly_goals?: Json
           notes?: string | null
+          plan_days?: Json | null
           preparation_level: string
           schedule_preference?: string | null
           strategy?: string | null
@@ -902,6 +904,7 @@ export type Database = {
           is_active?: boolean
           monthly_goals?: Json
           notes?: string | null
+          plan_days?: Json | null
           preparation_level?: string
           schedule_preference?: string | null
           strategy?: string | null

@@ -4,6 +4,25 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { generateStudyPlanWithAi, type SyllabusPaper } from "@/lib/study-planner.server";
 import { FINAL_CHAPTERS } from "@/lib/icai-syllabus";
 
+type TimetableBlock = {
+  start: string;
+  end: string;
+  subject: string;
+  activity: string;
+  focus_area: string | null;
+};
+
+type PlanDayType = "study" | "revision" | "holiday" | "buffer";
+
+type PlanDay = {
+  date: string; // YYYY-MM-DD
+  type: PlanDayType;
+  wake: string | null;
+  sleep: string | null;
+  note: string | null;
+  blocks: TimetableBlock[];
+};
+
 const GenerateInput = z.object({
   exam_name: z.string().min(1).max(120),
   exam_date: z.string().min(1),
@@ -98,6 +117,26 @@ export const generateStudyPlan = createServerFn({ method: "POST" })
     );
 
 
+    // Build initial plan_days: expand daily_timetable across days up to the exam.
+    const capped = Math.min(daysLeft, 90);
+    const planDays: PlanDay[] = [];
+    const startDate = new Date();
+    startDate.setUTCHours(0, 0, 0, 0);
+    for (let i = 0; i < capped; i++) {
+      const d = new Date(startDate.getTime() + i * 86400000);
+      const iso = d.toISOString().slice(0, 10);
+      // Last 3 days = revision by default
+      const type: PlanDayType = i >= capped - 3 ? "revision" : "study";
+      planDays.push({
+        date: iso,
+        type,
+        wake: "06:30",
+        sleep: "23:00",
+        note: null,
+        blocks: type === "study" ? plan.daily_timetable.map((b) => ({ ...b })) : [],
+      });
+    }
+
     // Deactivate previous active plan
     await context.supabase
       .from("study_plans")
@@ -105,7 +144,7 @@ export const generateStudyPlan = createServerFn({ method: "POST" })
       .eq("user_id", context.userId)
       .eq("is_active", true);
 
-    const { data: row, error } = await context.supabase
+    const { data: row, error } = await (context.supabase as any)
       .from("study_plans")
       .insert({
         user_id: context.userId,
@@ -121,6 +160,7 @@ export const generateStudyPlan = createServerFn({ method: "POST" })
         daily_timetable: plan.daily_timetable,
         weekly_goals: plan.weekly_goals,
         monthly_goals: plan.monthly_goals,
+        plan_days: planDays,
         is_active: true,
       })
       .select()
@@ -174,13 +214,6 @@ const SyncInput = z.object({
   start_date: z.string().optional(),
 });
 
-type TimetableBlock = {
-  start: string;
-  end: string;
-  subject: string;
-  activity: string;
-  focus_area: string | null;
-};
 
 function minutesBetween(start: string, end: string) {
   const [sh, sm] = start.split(":").map(Number);
@@ -201,8 +234,11 @@ export const syncPlanToTasks = createServerFn({ method: "POST" })
     if (pErr) throw new Error(pErr.message);
     if (!plan) throw new Error("Plan not found");
 
-    const blocks = ((plan.daily_timetable as unknown) as TimetableBlock[]) ?? [];
-    if (blocks.length === 0) throw new Error("This plan has no daily timetable to sync.");
+    const planDays = ((plan.plan_days as unknown) as PlanDay[] | null) ?? null;
+    const fallbackBlocks = ((plan.daily_timetable as unknown) as TimetableBlock[]) ?? [];
+    if ((!planDays || planDays.length === 0) && fallbackBlocks.length === 0) {
+      throw new Error("This plan has no daily timetable to sync.");
+    }
 
     const start = data.start_date ? new Date(data.start_date) : new Date();
     start.setHours(0, 0, 0, 0);
@@ -221,10 +257,20 @@ export const syncPlanToTasks = createServerFn({ method: "POST" })
     for (let d = 0; d < data.days; d++) {
       const day = new Date(start.getTime() + d * 86400000);
       const iso = day.toISOString().slice(0, 10);
+      let blocks: TimetableBlock[] = fallbackBlocks;
+      let dayLabel = "";
+      if (planDays) {
+        const found = planDays.find((p) => p.date === iso);
+        if (found) {
+          if (found.type === "holiday") continue; // skip holidays
+          blocks = found.blocks?.length ? found.blocks : fallbackBlocks;
+          dayLabel = found.type !== "study" ? ` [${found.type}]` : "";
+        }
+      }
       blocks.forEach((b, i) => {
         rows.push({
           user_id: context.userId,
-          title: `${b.start}–${b.end} · ${b.subject}`,
+          title: `${b.start}–${b.end} · ${b.subject}${dayLabel}`,
           description: [b.activity, b.focus_area].filter(Boolean).join(" — "),
           scheduled_date: iso,
           duration_minutes: minutesBetween(b.start, b.end),
@@ -234,6 +280,8 @@ export const syncPlanToTasks = createServerFn({ method: "POST" })
         });
       });
     }
+
+    if (rows.length === 0) throw new Error("No study days in that range (all holidays?).");
 
     const { error } = await context.supabase.from("tasks").insert(rows);
     if (error) throw new Error(error.message);
@@ -248,9 +296,19 @@ const TimetableBlockSchema = z.object({
   focus_area: z.string().nullable(),
 });
 
+const PlanDaySchema = z.object({
+  date: z.string(),
+  type: z.enum(["study", "revision", "holiday", "buffer"]),
+  wake: z.string().nullable(),
+  sleep: z.string().nullable(),
+  note: z.string().nullable(),
+  blocks: z.array(TimetableBlockSchema),
+});
+
 const UpdatePlanInput = z.object({
   id: z.string().uuid(),
   daily_timetable: z.array(TimetableBlockSchema).optional(),
+  plan_days: z.array(PlanDaySchema).optional(),
   strategy: z.string().max(2000).optional(),
   daily_hours: z.number().min(0.5).max(16).optional(),
 });
@@ -262,10 +320,12 @@ export const updateStudyPlan = createServerFn({ method: "POST" })
     const patch: {
       updated_at: string;
       daily_timetable?: unknown;
+      plan_days?: unknown;
       strategy?: string;
       daily_hours?: number;
     } = { updated_at: new Date().toISOString() };
     if (data.daily_timetable) patch.daily_timetable = data.daily_timetable;
+    if (data.plan_days) patch.plan_days = data.plan_days;
     if (data.strategy !== undefined) patch.strategy = data.strategy;
     if (data.daily_hours !== undefined) patch.daily_hours = data.daily_hours;
     const { error } = await (context.supabase as any)
@@ -276,5 +336,93 @@ export const updateStudyPlan = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+const RegenerateDayInput = z.object({
+  plan_id: z.string().uuid(),
+  date: z.string(),
+  focus_hint: z.string().max(400).optional().nullable(),
+});
+
+export const regenerateDay = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((v: unknown) => RegenerateDayInput.parse(v))
+  .handler(async ({ context, data }) => {
+    const { data: plan, error } = await context.supabase
+      .from("study_plans")
+      .select("*")
+      .eq("id", data.plan_id)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!plan) throw new Error("Plan not found");
+
+    const key = process.env.LOVABLE_API_KEY;
+    if (!key) throw new Error("LOVABLE_API_KEY missing");
+
+    const { data: profile } = await context.supabase
+      .from("profiles")
+      .select("level,exam_group")
+      .eq("id", context.userId)
+      .maybeSingle();
+    const level = (profile?.level === "final" ? "final" : "inter") as "inter" | "final";
+    const group = ((profile?.exam_group as string) || "both") as "group_1" | "group_2" | "both";
+    const syllabus = await loadSyllabus(context.supabase, level, group);
+
+    const examDate = new Date(plan.exam_date);
+    const target = new Date(data.date);
+    const daysLeft = Math.max(1, Math.ceil((examDate.getTime() - target.getTime()) / 86400000));
+
+    const notes = [
+      plan.notes,
+      data.focus_hint ? `Regenerate just this day. Focus: ${data.focus_hint}` : "Regenerate just this day.",
+    ]
+      .filter(Boolean)
+      .join(" ");
+
+    const fresh = await generateStudyPlanWithAi(
+      {
+        exam_name: plan.exam_name,
+        exam_date: plan.exam_date,
+        preparation_level: plan.preparation_level as "beginner" | "intermediate" | "advanced" | "revision",
+        daily_hours: plan.daily_hours,
+        schedule_preference: plan.schedule_preference,
+        weak_subjects: (plan.weak_subjects as string[]) ?? [],
+        strong_subjects: (plan.strong_subjects as string[]) ?? [],
+        notes,
+        student_level: level,
+        student_group: group,
+        syllabus,
+      },
+      key,
+      daysLeft,
+      Math.max(1, Math.ceil(daysLeft / 7)),
+    );
+
+    // Merge into plan_days
+    const existing = ((plan.plan_days as unknown) as PlanDay[] | null) ?? [];
+    const idx = existing.findIndex((d) => d.date === data.date);
+    const newBlocks = fresh.daily_timetable.map((b) => ({ ...b }));
+    if (idx >= 0) {
+      existing[idx] = { ...existing[idx], type: "study", blocks: newBlocks };
+    } else {
+      existing.push({
+        date: data.date,
+        type: "study",
+        wake: "06:30",
+        sleep: "23:00",
+        note: null,
+        blocks: newBlocks,
+      });
+      existing.sort((a, b) => a.date.localeCompare(b.date));
+    }
+    const { error: upErr } = await (context.supabase as any)
+      .from("study_plans")
+      .update({ plan_days: existing, updated_at: new Date().toISOString() })
+      .eq("id", data.plan_id)
+      .eq("user_id", context.userId);
+    if (upErr) throw new Error(upErr.message);
+
+    return { blocks: newBlocks };
+  });
+
 
 

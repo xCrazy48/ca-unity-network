@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
 import { format, parseISO } from "date-fns";
-import { CalendarDays, Check, Loader2, Plus, Sparkles, Star, Target, Trash2, Wand2 } from "lucide-react";
+import { CalendarDays, Check, Loader2, MoveRight, Plus, RefreshCw, Sparkles, Star, Target, Trash2, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/app-shell";
@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
-import { generateStudyPlan, deleteStudyPlan, activateStudyPlan, syncPlanToTasks, updateStudyPlan } from "@/lib/study-planner.functions";
+import { generateStudyPlan, deleteStudyPlan, activateStudyPlan, syncPlanToTasks, updateStudyPlan, regenerateDay } from "@/lib/study-planner.functions";
 import { Link } from "@tanstack/react-router";
 import { ListChecks } from "lucide-react";
 
@@ -57,6 +57,15 @@ type TimetableBlock = {
 };
 type WeeklyGoal = { week: number; label: string; goals: string[] };
 type MonthlyGoal = { month: string; goals: string[] };
+type PlanDayType = "study" | "revision" | "holiday" | "buffer";
+type PlanDay = {
+  date: string;
+  type: PlanDayType;
+  wake: string | null;
+  sleep: string | null;
+  note: string | null;
+  blocks: TimetableBlock[];
+};
 
 const LEVELS = [
   { value: "beginner", label: "Just starting" },
@@ -335,8 +344,8 @@ function PlanView({ plan }: { plan: {
   daily_timetable: unknown;
   weekly_goals: unknown;
   monthly_goals: unknown;
+  plan_days?: unknown;
 } }) {
-  const initialTimetable = (plan.daily_timetable as TimetableBlock[]) ?? [];
   const weekly = (plan.weekly_goals as WeeklyGoal[]) ?? [];
   const monthly = (plan.monthly_goals as MonthlyGoal[]) ?? [];
   const daysLeft = Math.max(
@@ -345,24 +354,32 @@ function PlanView({ plan }: { plan: {
   );
   const syncFn = useServerFn(syncPlanToTasks);
   const updateFn = useServerFn(updateStudyPlan);
+  const regenerateDayFn = useServerFn(regenerateDay);
   const qc = useQueryClient();
 
-  const [timetable, setTimetable] = useState<TimetableBlock[]>(initialTimetable);
+  const seedTemplate = (plan.daily_timetable as TimetableBlock[]) ?? [];
+  const seedDays = (plan.plan_days as PlanDay[]) ?? [];
+  const [days, setDays] = useState<PlanDay[]>(seedDays);
+  const [template, setTemplate] = useState<TimetableBlock[]>(seedTemplate);
+  const [activeDate, setActiveDate] = useState<string>(seedDays[0]?.date ?? new Date().toISOString().slice(0, 10));
   const [saveState, setSaveState] = useState<"idle" | "dirty" | "saving" | "saved">("idle");
+  const [regenBusy, setRegenBusy] = useState(false);
 
-  // Reset when a different plan loads
   useEffect(() => {
-    setTimetable((plan.daily_timetable as TimetableBlock[]) ?? []);
+    const nextDays = (plan.plan_days as PlanDay[]) ?? [];
+    setDays(nextDays);
+    setTemplate((plan.daily_timetable as TimetableBlock[]) ?? []);
+    setActiveDate((prev) => nextDays.find((d) => d.date === prev)?.date ?? nextDays[0]?.date ?? prev);
     setSaveState("idle");
-  }, [plan.id, plan.daily_timetable]);
+  }, [plan.id, plan.plan_days, plan.daily_timetable]);
 
-  // Autosave after 1.5s of no changes
+  // Debounced autosave
   useEffect(() => {
     if (saveState !== "dirty") return;
     const t = setTimeout(async () => {
       setSaveState("saving");
       try {
-        await updateFn({ data: { id: plan.id, daily_timetable: timetable } });
+        await updateFn({ data: { id: plan.id, plan_days: days, daily_timetable: template } });
         setSaveState("saved");
         qc.invalidateQueries({ queryKey: ["study-plans"] });
         setTimeout(() => setSaveState((s) => (s === "saved" ? "idle" : s)), 1500);
@@ -372,38 +389,89 @@ function PlanView({ plan }: { plan: {
       }
     }, 1500);
     return () => clearTimeout(t);
-  }, [timetable, saveState, plan.id, updateFn, qc]);
+  }, [days, template, saveState, plan.id, updateFn, qc]);
 
-  const editBlock = (i: number, patch: Partial<TimetableBlock>) => {
-    setTimetable((prev) => prev.map((b, idx) => (idx === i ? { ...b, ...patch } : b)));
+  const activeDay = useMemo(() => days.find((d) => d.date === activeDate) ?? null, [days, activeDate]);
+
+  const patchDay = (date: string, patch: Partial<PlanDay>) => {
+    setDays((prev) => prev.map((d) => (d.date === date ? { ...d, ...patch } : d)));
     setSaveState("dirty");
   };
-  const deleteBlock = (i: number) => {
-    setTimetable((prev) => prev.filter((_, idx) => idx !== i));
+  const patchBlock = (date: string, i: number, patch: Partial<TimetableBlock>) => {
+    setDays((prev) =>
+      prev.map((d) =>
+        d.date === date ? { ...d, blocks: d.blocks.map((b, idx) => (idx === i ? { ...b, ...patch } : b)) } : d,
+      ),
+    );
     setSaveState("dirty");
   };
-  const addBlock = () => {
-    const last = timetable[timetable.length - 1];
-    const start = last?.end ?? "09:00";
-    const [h, m] = start.split(":").map(Number);
-    const endH = Math.min(23, (h ?? 9) + 1);
-    const end = `${String(endH).padStart(2, "0")}:${String(m ?? 0).padStart(2, "0")}`;
-    setTimetable((prev) => [...prev, { start, end, subject: "New block", activity: "", focus_area: null }]);
+  const deleteBlock = (date: string, i: number) => {
+    setDays((prev) => prev.map((d) => (d.date === date ? { ...d, blocks: d.blocks.filter((_, idx) => idx !== i) } : d)));
     setSaveState("dirty");
   };
-  const moveBlock = (i: number, dir: -1 | 1) => {
-    setTimetable((prev) => {
-      const next = [...prev];
-      const j = i + dir;
-      if (j < 0 || j >= next.length) return prev;
-      [next[i], next[j]] = [next[j], next[i]];
-      return next;
+  const addBlock = (date: string) => {
+    setDays((prev) =>
+      prev.map((d) => {
+        if (d.date !== date) return d;
+        const last = d.blocks[d.blocks.length - 1];
+        const start = last?.end ?? "09:00";
+        const [h, m] = start.split(":").map(Number);
+        const end = `${String(Math.min(23, (h ?? 9) + 1)).padStart(2, "0")}:${String(m ?? 0).padStart(2, "0")}`;
+        return {
+          ...d,
+          blocks: [...d.blocks, { start, end, subject: "New block", activity: "", focus_area: null }],
+        };
+      }),
+    );
+    setSaveState("dirty");
+  };
+  const moveBlockInDay = (date: string, i: number, dir: -1 | 1) => {
+    setDays((prev) =>
+      prev.map((d) => {
+        if (d.date !== date) return d;
+        const next = [...d.blocks];
+        const j = i + dir;
+        if (j < 0 || j >= next.length) return d;
+        [next[i], next[j]] = [next[j], next[i]];
+        return { ...d, blocks: next };
+      }),
+    );
+    setSaveState("dirty");
+  };
+  const moveBlockToDay = (fromDate: string, i: number, toDate: string) => {
+    if (fromDate === toDate) return;
+    setDays((prev) => {
+      const from = prev.find((d) => d.date === fromDate);
+      const block = from?.blocks[i];
+      if (!block) return prev;
+      return prev.map((d) => {
+        if (d.date === fromDate) return { ...d, blocks: d.blocks.filter((_, idx) => idx !== i) };
+        if (d.date === toDate) return { ...d, blocks: [...d.blocks, block] };
+        return d;
+      });
     });
     setSaveState("dirty");
   };
 
+  const doRegenerateDay = async () => {
+    if (!activeDay) return;
+    setRegenBusy(true);
+    try {
+      const res = await regenerateDayFn({ data: { plan_id: plan.id, date: activeDay.date } });
+      setDays((prev) =>
+        prev.map((d) => (d.date === activeDay.date ? { ...d, type: "study", blocks: res.blocks } : d)),
+      );
+      toast.success("Day regenerated");
+      qc.invalidateQueries({ queryKey: ["study-plans"] });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not regenerate this day");
+    } finally {
+      setRegenBusy(false);
+    }
+  };
+
   const sync = useMutation({
-    mutationFn: (days: number) => syncFn({ data: { plan_id: plan.id, days } }),
+    mutationFn: (d: number) => syncFn({ data: { plan_id: plan.id, days: d } }),
     onSuccess: (res) => {
       qc.invalidateQueries({ queryKey: ["tasks"] });
       toast.success(`Added ${res.inserted} tasks across ${res.days} days`, {
@@ -412,6 +480,12 @@ function PlanView({ plan }: { plan: {
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  const dayTypeColor = (t: PlanDayType) =>
+    t === "holiday" ? "bg-destructive/15 text-destructive"
+    : t === "buffer" ? "bg-muted text-muted-foreground"
+    : t === "revision" ? "bg-gold/15 text-gold"
+    : "bg-primary/10 text-primary";
 
   return (
     <Card>
@@ -451,97 +525,163 @@ function PlanView({ plan }: { plan: {
           </div>
         )}
 
-
-        <Tabs defaultValue="daily">
+        <Tabs defaultValue="schedule">
           <TabsList>
-            <TabsTrigger value="daily">Daily timetable</TabsTrigger>
+            <TabsTrigger value="schedule">Schedule</TabsTrigger>
+            <TabsTrigger value="template">Daily template</TabsTrigger>
             <TabsTrigger value="weekly">Weekly goals</TabsTrigger>
             <TabsTrigger value="monthly">Monthly goals</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="daily" className="mt-4">
+          <TabsContent value="schedule" className="mt-4">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <div className="text-xs text-muted-foreground">
-                Tap any field to edit. Changes autosave to your account.
+                Pick a day, edit blocks, mark holidays or revision. Changes autosave.
               </div>
-              <div className="flex items-center gap-2 text-xs">
-                {saveState === "saving" && (
-                  <span className="inline-flex items-center gap-1 text-muted-foreground">
-                    <Loader2 className="h-3 w-3 animate-spin" /> Saving…
-                  </span>
-                )}
-                {saveState === "saved" && (
-                  <span className="inline-flex items-center gap-1 text-green-600">
-                    <Check className="h-3 w-3" /> Saved
-                  </span>
-                )}
-                {saveState === "dirty" && (
-                  <span className="text-muted-foreground">Unsaved changes…</span>
-                )}
-              </div>
+              <SaveIndicator state={saveState} />
             </div>
 
-            {timetable.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No blocks. Add one below.</p>
+            {days.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No per-day schedule. Regenerate the plan to build one.</p>
+            ) : (
+              <>
+                {/* Horizontal day picker */}
+                <div className="mb-4 -mx-2 overflow-x-auto px-2 pb-2">
+                  <div className="flex gap-2">
+                    {days.map((d) => {
+                      const active = d.date === activeDate;
+                      return (
+                        <button
+                          key={d.date}
+                          onClick={() => setActiveDate(d.date)}
+                          className={`shrink-0 rounded-lg border px-3 py-2 text-left text-xs transition ${
+                            active ? "border-gold bg-gold/10" : "border-border hover:bg-accent"
+                          }`}
+                        >
+                          <div className="font-mono">{format(parseISO(d.date), "EEE d")}</div>
+                          <div className={`mt-1 inline-flex rounded px-1.5 py-0.5 text-[10px] uppercase ${dayTypeColor(d.type)}`}>
+                            {d.type}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {activeDay && (
+                  <div className="space-y-4">
+                    {/* Day header controls */}
+                    <div className="grid gap-3 rounded-lg border border-border p-3 sm:grid-cols-2 lg:grid-cols-4">
+                      <div>
+                        <Label className="text-xs">Day type</Label>
+                        <Select value={activeDay.type} onValueChange={(v) => patchDay(activeDay.date, { type: v as PlanDayType })}>
+                          <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="study">Study</SelectItem>
+                            <SelectItem value="revision">Revision</SelectItem>
+                            <SelectItem value="buffer">Buffer</SelectItem>
+                            <SelectItem value="holiday">Holiday</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label className="text-xs">Wake</Label>
+                        <Input type="time" className="h-8" value={activeDay.wake ?? ""} onChange={(e) => patchDay(activeDay.date, { wake: e.target.value || null })} />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Sleep</Label>
+                        <Input type="time" className="h-8" value={activeDay.sleep ?? ""} onChange={(e) => patchDay(activeDay.date, { sleep: e.target.value || null })} />
+                      </div>
+                      <div className="flex items-end gap-2">
+                        <Button size="sm" variant="outline" className="gap-1.5" onClick={doRegenerateDay} disabled={regenBusy}>
+                          {regenBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />} Regenerate
+                        </Button>
+                      </div>
+                      <div className="sm:col-span-2 lg:col-span-4">
+                        <Label className="text-xs">Note</Label>
+                        <Input className="h-8" value={activeDay.note ?? ""} onChange={(e) => patchDay(activeDay.date, { note: e.target.value || null })} placeholder="e.g. Coaching class, exam form deadline…" />
+                      </div>
+                    </div>
+
+                    {activeDay.type === "holiday" ? (
+                      <div className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+                        Marked as holiday — no study blocks will sync to your planner for this day.
+                      </div>
+                    ) : (
+                      <>
+                        <ul className="space-y-2">
+                          {activeDay.blocks.map((b, i) => (
+                            <li key={i} className="rounded-lg border border-border p-3 sm:flex sm:items-start sm:gap-3">
+                              <div className="flex items-center gap-2 sm:w-32 sm:shrink-0">
+                                <Input type="time" value={b.start} onChange={(e) => patchBlock(activeDay.date, i, { start: e.target.value })} className="h-8 px-2 font-mono text-xs" />
+                                <span className="text-muted-foreground">–</span>
+                                <Input type="time" value={b.end} onChange={(e) => patchBlock(activeDay.date, i, { end: e.target.value })} className="h-8 px-2 font-mono text-xs" />
+                              </div>
+                              <div className="mt-2 min-w-0 flex-1 space-y-1 sm:mt-0">
+                                <Input value={b.subject} onChange={(e) => patchBlock(activeDay.date, i, { subject: e.target.value })} placeholder="Subject / paper" className="h-8 font-medium" />
+                                <Input value={b.activity} onChange={(e) => patchBlock(activeDay.date, i, { activity: e.target.value })} placeholder="Activity (e.g. Practice MCQs)" className="h-8 text-sm" />
+                                <Input value={b.focus_area ?? ""} onChange={(e) => patchBlock(activeDay.date, i, { focus_area: e.target.value || null })} placeholder="Chapter / focus area" className="h-8 text-xs" />
+                              </div>
+                              <div className="mt-2 flex flex-wrap items-center justify-end gap-1 sm:mt-0 sm:flex-col">
+                                <div className="flex gap-1">
+                                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => moveBlockInDay(activeDay.date, i, -1)} disabled={i === 0} aria-label="Move up">↑</Button>
+                                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => moveBlockInDay(activeDay.date, i, 1)} disabled={i === activeDay.blocks.length - 1} aria-label="Move down">↓</Button>
+                                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => deleteBlock(activeDay.date, i)} aria-label="Delete">
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                  </Button>
+                                </div>
+                                <Select value="" onValueChange={(v) => moveBlockToDay(activeDay.date, i, v)}>
+                                  <SelectTrigger className="h-7 gap-1 text-xs">
+                                    <MoveRight className="h-3 w-3" /> <SelectValue placeholder="Move to…" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {days.filter((d) => d.date !== activeDay.date).slice(0, 30).map((d) => (
+                                      <SelectItem key={d.date} value={d.date}>{format(parseISO(d.date), "EEE, MMM d")}</SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
+                        <Button variant="outline" size="sm" className="gap-1.5" onClick={() => addBlock(activeDay.date)}>
+                          <Plus className="h-4 w-4" /> Add block
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                )}
+              </>
+            )}
+          </TabsContent>
+
+          <TabsContent value="template" className="mt-4">
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <div className="text-xs text-muted-foreground">Default daily template (used when a day has no blocks).</div>
+              <SaveIndicator state={saveState} />
+            </div>
+            {template.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No template blocks.</p>
             ) : (
               <ul className="space-y-2">
-                {timetable.map((b, i) => (
-                  <li
-                    key={i}
-                    className="rounded-lg border border-border p-3 sm:flex sm:items-start sm:gap-3"
-                  >
+                {template.map((b, i) => (
+                  <li key={i} className="rounded-lg border border-border p-3 sm:flex sm:items-start sm:gap-3">
                     <div className="flex items-center gap-2 sm:w-32 sm:shrink-0">
-                      <Input
-                        type="time"
-                        value={b.start}
-                        onChange={(e) => editBlock(i, { start: e.target.value })}
-                        className="h-8 px-2 font-mono text-xs"
-                      />
+                      <Input type="time" value={b.start} onChange={(e) => { setTemplate((p) => p.map((x, idx) => idx === i ? { ...x, start: e.target.value } : x)); setSaveState("dirty"); }} className="h-8 px-2 font-mono text-xs" />
                       <span className="text-muted-foreground">–</span>
-                      <Input
-                        type="time"
-                        value={b.end}
-                        onChange={(e) => editBlock(i, { end: e.target.value })}
-                        className="h-8 px-2 font-mono text-xs"
-                      />
+                      <Input type="time" value={b.end} onChange={(e) => { setTemplate((p) => p.map((x, idx) => idx === i ? { ...x, end: e.target.value } : x)); setSaveState("dirty"); }} className="h-8 px-2 font-mono text-xs" />
                     </div>
                     <div className="mt-2 min-w-0 flex-1 space-y-1 sm:mt-0">
-                      <Input
-                        value={b.subject}
-                        onChange={(e) => editBlock(i, { subject: e.target.value })}
-                        placeholder="Subject / paper"
-                        className="h-8 font-medium"
-                      />
-                      <Input
-                        value={b.activity}
-                        onChange={(e) => editBlock(i, { activity: e.target.value })}
-                        placeholder="Activity (e.g. Practice MCQs)"
-                        className="h-8 text-sm"
-                      />
-                      <Input
-                        value={b.focus_area ?? ""}
-                        onChange={(e) => editBlock(i, { focus_area: e.target.value || null })}
-                        placeholder="Chapter / focus area (optional)"
-                        className="h-8 text-xs"
-                      />
+                      <Input value={b.subject} onChange={(e) => { setTemplate((p) => p.map((x, idx) => idx === i ? { ...x, subject: e.target.value } : x)); setSaveState("dirty"); }} className="h-8 font-medium" />
+                      <Input value={b.activity} onChange={(e) => { setTemplate((p) => p.map((x, idx) => idx === i ? { ...x, activity: e.target.value } : x)); setSaveState("dirty"); }} className="h-8 text-sm" />
                     </div>
-                    <div className="mt-2 flex justify-end gap-1 sm:mt-0 sm:flex-col">
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => moveBlock(i, -1)} disabled={i === 0} aria-label="Move up">↑</Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => moveBlock(i, 1)} disabled={i === timetable.length - 1} aria-label="Move down">↓</Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => deleteBlock(i)} aria-label="Delete block">
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
+                    <Button variant="ghost" size="icon" className="mt-2 h-7 w-7 text-destructive sm:mt-0" onClick={() => { setTemplate((p) => p.filter((_, idx) => idx !== i)); setSaveState("dirty"); }}>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
                   </li>
                 ))}
               </ul>
             )}
-
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Button variant="outline" size="sm" className="gap-1.5" onClick={addBlock}>
-                <Plus className="h-4 w-4" /> Add block
-              </Button>
-            </div>
           </TabsContent>
 
           <TabsContent value="weekly" className="mt-4 space-y-3">
@@ -589,5 +729,15 @@ function PlanView({ plan }: { plan: {
         </Tabs>
       </CardContent>
     </Card>
+  );
+}
+
+function SaveIndicator({ state }: { state: "idle" | "dirty" | "saving" | "saved" }) {
+  return (
+    <div className="flex items-center gap-2 text-xs">
+      {state === "saving" && <span className="inline-flex items-center gap-1 text-muted-foreground"><Loader2 className="h-3 w-3 animate-spin" /> Saving…</span>}
+      {state === "saved" && <span className="inline-flex items-center gap-1 text-green-600"><Check className="h-3 w-3" /> Saved</span>}
+      {state === "dirty" && <span className="text-muted-foreground">Unsaved changes…</span>}
+    </div>
   );
 }
