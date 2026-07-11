@@ -259,7 +259,6 @@ function MistakeForm({
   const [source, setSource] = useState<string>("module");
   const [paperCode, setPaperCode] = useState<string>("");
   const [topic, setTopic] = useState("");
-  const [concept, setConcept] = useState("");
   const [mistake, setMistake] = useState("");
   const [correction, setCorrection] = useState("");
   const [sourceRef, setSourceRef] = useState("");
