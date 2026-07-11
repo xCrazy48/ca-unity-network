@@ -83,6 +83,13 @@ export const generateStudyPlan = createServerFn({ method: "POST" })
     const group = ((profile?.exam_group as string) || "both") as "group_1" | "group_2" | "both";
     const syllabus = await loadSyllabus(context.supabase, level, group);
 
+    const hasChapters = syllabus.some((p) => p.chapters.length > 0);
+    if (syllabus.length === 0 || !hasChapters) {
+      throw new Error(
+        "ICAI New Scheme syllabus data is missing for your papers. Please open Exam Calendar and select your level & group, then try again. If the problem persists, contact support.",
+      );
+    }
+
     const plan = await generateStudyPlanWithAi(
       { ...data, student_level: level, student_group: group, syllabus },
       key,
@@ -232,4 +239,42 @@ export const syncPlanToTasks = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { inserted: rows.length, days: data.days };
   });
+
+const TimetableBlockSchema = z.object({
+  start: z.string(),
+  end: z.string(),
+  subject: z.string(),
+  activity: z.string(),
+  focus_area: z.string().nullable(),
+});
+
+const UpdatePlanInput = z.object({
+  id: z.string().uuid(),
+  daily_timetable: z.array(TimetableBlockSchema).optional(),
+  strategy: z.string().max(2000).optional(),
+  daily_hours: z.number().min(0.5).max(16).optional(),
+});
+
+export const updateStudyPlan = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((v: unknown) => UpdatePlanInput.parse(v))
+  .handler(async ({ context, data }) => {
+    const patch: {
+      updated_at: string;
+      daily_timetable?: unknown;
+      strategy?: string;
+      daily_hours?: number;
+    } = { updated_at: new Date().toISOString() };
+    if (data.daily_timetable) patch.daily_timetable = data.daily_timetable;
+    if (data.strategy !== undefined) patch.strategy = data.strategy;
+    if (data.daily_hours !== undefined) patch.daily_hours = data.daily_hours;
+    const { error } = await (context.supabase as any)
+      .from("study_plans")
+      .update(patch)
+      .eq("id", data.id)
+      .eq("user_id", context.userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
 
