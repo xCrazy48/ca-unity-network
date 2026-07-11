@@ -264,7 +264,7 @@ function StudyPlannerPage() {
             >
               {generate.isPending ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" /> Generating…
+                  <Loader2 className="h-4 w-4 animate-spin" /> Building your plan…
                 </>
               ) : (
                 <>
@@ -272,6 +272,11 @@ function StudyPlannerPage() {
                 </>
               )}
             </Button>
+            {generate.isPending && (
+              <div className="rounded-lg border border-gold/30 bg-gold/5 p-3 text-xs text-muted-foreground">
+                Reading ICAI syllabus, weightage, and your exam calendar. This usually takes 15–30 seconds.
+              </div>
+            )}
           </CardContent>
         </Card>
 
