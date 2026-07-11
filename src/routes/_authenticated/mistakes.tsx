@@ -28,6 +28,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
+import { useUserPapers } from "@/hooks/use-user-papers";
 import type { Tables } from "@/integrations/supabase/types";
 
 export const Route = createFileRoute("/_authenticated/mistakes")({
@@ -49,16 +50,7 @@ function MistakesPage() {
   const [tab, setTab] = useState<string>("all");
   const [sourceFilter, setSourceFilter] = useState("all");
 
-  const { data: papers } = useQuery({
-    queryKey: ["papers"],
-    queryFn: async () =>
-      (await supabase.from("papers").select("*").order("sort_order")).data ?? [],
-  });
-  const { data: chapters } = useQuery({
-    queryKey: ["chapters"],
-    queryFn: async () =>
-      (await supabase.from("chapters").select("*").order("sort_order")).data ?? [],
-  });
+  const { data: papers } = useUserPapers();
   const { data: mistakes } = useQuery({
     queryKey: ["mistakes"],
     queryFn: async () =>
@@ -129,17 +121,11 @@ function MistakesPage() {
             <MistakeForm
               onDone={() => setOpen(false)}
               papers={papers ?? []}
-              chapters={chapters ?? []}
             />
           </Dialog>
         }
       />
 
-      <div className="mb-6 grid gap-3 sm:grid-cols-3">
-        <Stat label="Open" value={mistakes?.filter(m => m.status === "open").length ?? 0} />
-        <Stat label="Due for review" value={dueToday} accent />
-        <Stat label="Resolved" value={mistakes?.filter(m => m.status === "resolved").length ?? 0} />
-      </div>
 
       <div className="mb-6 flex flex-wrap items-center gap-3">
         <Tabs value={tab} onValueChange={setTab}>
@@ -265,22 +251,17 @@ function Stat({ label, value, accent }: { label: string; value: number; accent?:
 function MistakeForm({
   onDone,
   papers,
-  chapters,
 }: {
   onDone: () => void;
   papers: Tables<"papers">[];
-  chapters: Tables<"chapters">[];
 }) {
   const qc = useQueryClient();
   const [source, setSource] = useState<string>("module");
   const [paperCode, setPaperCode] = useState<string>("");
-  const [chapterId, setChapterId] = useState<string>("");
-  const [concept, setConcept] = useState("");
+  const [topic, setTopic] = useState("");
   const [mistake, setMistake] = useState("");
   const [correction, setCorrection] = useState("");
   const [sourceRef, setSourceRef] = useState("");
-
-  const filteredChapters = chapters.filter((c) => !paperCode || c.paper_code === paperCode);
 
   const save = useMutation({
     mutationFn: async () => {
@@ -292,8 +273,8 @@ function MistakeForm({
         user_id: user.id,
         source: source as Tables<"mistakes">["source"],
         paper_code: paperCode || null,
-        chapter_id: chapterId || null,
-        concept,
+        chapter_id: null,
+        concept: topic,
         mistake,
         correction: correction || null,
         source_ref: sourceRef || null,
@@ -338,41 +319,25 @@ function MistakeForm({
             />
           </Field>
         </div>
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="Paper">
-            <Select value={paperCode} onValueChange={(v) => { setPaperCode(v); setChapterId(""); }}>
-              <SelectTrigger>
-                <SelectValue placeholder="Optional" />
-              </SelectTrigger>
-              <SelectContent>
-                {papers.map((p) => (
-                  <SelectItem key={p.code} value={p.code}>
-                    {p.code}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Field>
-          <Field label="Chapter">
-            <Select value={chapterId} onValueChange={setChapterId} disabled={!paperCode}>
-              <SelectTrigger>
-                <SelectValue placeholder="Optional" />
-              </SelectTrigger>
-              <SelectContent>
-                {filteredChapters.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Field>
-        </div>
-        <Field label="Concept">
+        <Field label="Paper">
+          <Select value={paperCode} onValueChange={setPaperCode}>
+            <SelectTrigger>
+              <SelectValue placeholder="Optional" />
+            </SelectTrigger>
+            <SelectContent>
+              {papers.map((p) => (
+                <SelectItem key={p.code} value={p.code}>
+                  {p.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Field>
+        <Field label="Topic">
           <Input
-            value={concept}
-            onChange={(e) => setConcept(e.target.value)}
-            placeholder="e.g. Deferred tax on revaluation"
+            value={topic}
+            onChange={(e) => setTopic(e.target.value)}
+            placeholder="e.g. Ind AS 12 — Deferred Tax"
           />
         </Field>
         <Field label="Mistake">
@@ -398,7 +363,7 @@ function MistakeForm({
         </Button>
         <Button
           onClick={() => save.mutate()}
-          disabled={!concept || !mistake || save.isPending}
+          disabled={!topic || !mistake || save.isPending}
           className="bg-gold text-primary-foreground"
         >
           Save mistake

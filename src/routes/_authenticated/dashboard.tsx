@@ -15,7 +15,10 @@ import {
 import { AppShell } from "@/components/app-shell";
 import { QuoteDialog } from "@/components/quote-dialog";
 import { MentoringCard } from "@/components/mentoring-card";
+import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+import { useUserPapers } from "@/hooks/use-user-papers";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -44,10 +47,8 @@ function Dashboard() {
     },
   });
 
-  const { data: papers } = useQuery({
-    queryKey: ["papers"],
-    queryFn: async () => (await supabase.from("papers").select("*").order("sort_order")).data ?? [],
-  });
+  const { data: papers } = useUserPapers();
+
 
   const { data: progress } = useQuery({
     queryKey: ["chapter_progress"],
@@ -255,6 +256,84 @@ function Dashboard() {
           />
         )}
       </section>
+
+      {/* Paper-wise progress */}
+      <section className="mt-8 rounded-2xl border border-border bg-card p-6">
+        <div className="flex items-center justify-between">
+          <h2 className="font-display text-xl font-semibold">Paper-wise progress</h2>
+          <Link to="/chapters" className="text-sm text-gold hover:underline">
+            Manage chapters
+          </Link>
+        </div>
+        <div className="mt-5 grid gap-4 md:grid-cols-2">
+          {(papers ?? []).map((paper) => {
+            const chs = (chapters ?? []).filter((c) => c.paper_code === paper.code);
+            const chIds = new Set(chs.map((c) => c.id));
+            const pg = (progress ?? []).filter((p) => chIds.has(p.chapter_id));
+            const mastered = pg.filter(
+              (p) => p.status === "mastered" || p.status === "revised",
+            ).length;
+            const avgConf = pg.length
+              ? Math.round(pg.reduce((s, p) => s + (p.confidence ?? 0), 0) / pg.length)
+              : 0;
+            const paperMocks = (mocks ?? []).filter((m) => m.paper_code === paper.code);
+            const avgScore = paperMocks.length
+              ? Math.round(
+                  paperMocks.reduce(
+                    (s, m) => s + (Number(m.score) / Number(m.max_score)) * 100,
+                    0,
+                  ) / paperMocks.length,
+                )
+              : null;
+            const coverage = chs.length ? Math.round((mastered / chs.length) * 100) : 0;
+            return (
+              <Link
+                key={paper.code}
+                to="/chapters"
+                className="group rounded-xl border border-border bg-background p-5 transition hover:border-gold/40"
+              >
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground">
+                      <Badge variant="outline" className="border-gold/40 text-gold">
+                        Paper {paper.code}
+                      </Badge>
+                      <span>{paper.paper_group.replace("_", " ")}</span>
+                    </div>
+                    <div className="mt-2 font-display text-base font-semibold">{paper.name}</div>
+                  </div>
+                  <ArrowRight className="h-4 w-4 text-muted-foreground transition group-hover:translate-x-1 group-hover:text-gold" />
+                </div>
+                <div className="mt-4">
+                  <div className="mb-1.5 flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground">Coverage</span>
+                    <span className="font-medium">{coverage}%</span>
+                  </div>
+                  <Progress value={coverage} />
+                  <div className="mt-1 text-[10px] text-muted-foreground">
+                    {mastered} of {chs.length} chapters revised or mastered
+                  </div>
+                </div>
+                <div className="mt-3 grid grid-cols-2 gap-3 text-xs">
+                  <div>
+                    <div className="text-muted-foreground uppercase tracking-wider text-[10px]">Avg confidence</div>
+                    <div className="mt-0.5 font-display text-base font-semibold">{avgConf}%</div>
+                  </div>
+                  <div>
+                    <div className="text-muted-foreground uppercase tracking-wider text-[10px]">
+                      {paperMocks.length ? `Avg mock (${paperMocks.length})` : "Mocks"}
+                    </div>
+                    <div className="mt-0.5 font-display text-base font-semibold text-gold">
+                      {avgScore !== null ? `${avgScore}%` : "—"}
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      </section>
+
 
       {/* Quick actions */}
       <section className="mt-8 grid gap-4 md:grid-cols-3">
