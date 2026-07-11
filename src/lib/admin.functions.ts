@@ -21,14 +21,17 @@ export const getAdminStats = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuthWithMfa])
   .handler(async ({ context }) => {
     await requireAdmin(context.supabase, context.userId);
-    // Call via the user's authenticated client so auth.uid() is populated
-    // inside public.get_admin_stats (which re-checks admin role).
-    const { data, error } = await (context.supabase as unknown as {
+    // Call via the service-role client. EXECUTE on public.get_admin_stats
+    // is revoked from `authenticated`; only service_role may invoke it.
+    // Admin authorization has already been enforced above.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await (supabaseAdmin as unknown as {
       rpc: (fn: string) => Promise<{ data: unknown; error: { message: string } | null }>;
     }).rpc("get_admin_stats");
     if (error) throw new Error(error.message);
     return { stats: (data ?? {}) as Record<string, string | number | boolean | null | Array<Record<string, string | number>>> };
   });
+
 
 
 export const logAdminAction = createServerFn({ method: "POST" })
