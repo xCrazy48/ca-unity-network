@@ -1,5 +1,15 @@
 User-agent: *
 Allow: /
+
+Disallow: /admin
+Disallow: /api
+Disallow: /private
+Disallow: /_next
 Disallow: /_authenticated/
 Disallow: /auth
+Disallow: /auth/callback
 Disallow: /reset-password
+Disallow: /temp
+Disallow: /dev
+
+Sitemap: https://caunitynetwork.in/sitemap.xml
