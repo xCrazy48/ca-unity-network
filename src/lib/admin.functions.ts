@@ -21,11 +21,15 @@ export const getAdminStats = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await requireAdmin(context.supabase, context.userId);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data, error } = await supabaseAdmin.rpc("get_admin_stats" as never);
+    // Call via the user's authenticated client so auth.uid() is populated
+    // inside public.get_admin_stats (which re-checks admin role).
+    const { data, error } = await (context.supabase as unknown as {
+      rpc: (fn: string) => Promise<{ data: unknown; error: { message: string } | null }>;
+    }).rpc("get_admin_stats");
     if (error) throw new Error(error.message);
     return { stats: (data ?? {}) as Record<string, string | number | boolean | null | Array<Record<string, string | number>>> };
   });
+
 
 export const logAdminAction = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
