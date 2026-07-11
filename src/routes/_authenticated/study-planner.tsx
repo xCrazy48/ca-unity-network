@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
 import { format, parseISO } from "date-fns";
-import { CalendarDays, Loader2, Sparkles, Star, Target, Trash2, Wand2 } from "lucide-react";
+import { CalendarDays, Check, Loader2, Plus, RefreshCw, Sparkles, Star, Target, Trash2, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/app-shell";
