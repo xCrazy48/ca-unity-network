@@ -34,9 +34,14 @@ export const Route = createFileRoute("/_authenticated/planner")({
   head: () => ({
     meta: [
       { title: "Planner · CA Unity Network" },
-      { name: "robots", content: "noindex" },
+      { name: "description", content: "Plan your CA prep day by day — schedule tasks, track progress, and stay on top of chapters, mocks, and revisions." },
+      { property: "og:title", content: "Planner · CA Unity Network" },
+      { property: "og:description", content: "Plan your CA prep day by day — schedule tasks, track progress, and stay on top of chapters, mocks, and revisions." },
+      { property: "og:url", content: "https://caunitynetwork.in/planner" },
     ],
+    links: [{ rel: "canonical", href: "https://caunitynetwork.in/planner" }],
   }),
+
   component: PlannerPage,
 });
 
