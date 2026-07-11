@@ -31,6 +31,13 @@ const PlanSchema = z.object({
   ),
 });
 
+export type SyllabusPaper = {
+  code: string;
+  name: string;
+  group: string;
+  chapters: { name: string; weightage_min: number | null; weightage_max: number | null }[];
+};
+
 export type StudyPlanAiInput = {
   exam_name: string;
   exam_date: string;
@@ -40,6 +47,9 @@ export type StudyPlanAiInput = {
   weak_subjects: string[];
   strong_subjects: string[];
   notes?: string | null;
+  student_level?: "inter" | "final" | null;
+  student_group?: "group_1" | "group_2" | "both" | null;
+  syllabus?: SyllabusPaper[];
 };
 
 export type StudyPlanAiOutput = z.infer<typeof PlanSchema>;
@@ -48,8 +58,30 @@ function createModel(lovableApiKey: string) {
   return createLovableAiGatewayProvider(lovableApiKey, true)(MODEL);
 }
 
+function formatSyllabus(syllabus: SyllabusPaper[] | undefined) {
+  if (!syllabus || syllabus.length === 0) return "No paper syllabus attached — infer only from the exam name and do NOT invent chapters.";
+  return syllabus
+    .map((p) => {
+      const chapters = p.chapters
+        .map((c) => {
+          const w =
+            c.weightage_min != null && c.weightage_max != null
+              ? ` (${c.weightage_min}–${c.weightage_max}%)`
+              : "";
+          return `    - ${c.name}${w}`;
+        })
+        .join("\n");
+      return `- ${p.name} [${p.code}, ${p.group}]\n${chapters}`;
+    })
+    .join("\n");
+}
+
 function buildPrompt(data: StudyPlanAiInput, daysLeft: number, weeksLeft: number) {
-  return `Build a realistic, executable study plan.
+  const levelLabel = data.student_level === "final" ? "CA Final" : data.student_level === "inter" ? "CA Intermediate" : "CA";
+  const groupLabel = data.student_group === "group_1" ? "Group 1" : data.student_group === "group_2" ? "Group 2" : "Both Groups";
+  const syllabusBlock = formatSyllabus(data.syllabus);
+
+  return `Build a realistic, executable study plan for a ${levelLabel} (${groupLabel}) student following the ICAI NEW SCHEME (effective May 2024, current BoS Study Material).
 
 Exam: ${data.exam_name}
 Exam date: ${data.exam_date} (${daysLeft} days / ~${weeksLeft} weeks away)
@@ -60,14 +92,22 @@ Weak subjects: ${data.weak_subjects.join(", ") || "none listed"}
 Strong subjects: ${data.strong_subjects.join(", ") || "none listed"}
 Extra notes: ${data.notes || "none"}
 
-Produce:
-1. strategy — 3-6 sentence overall approach (concept-building → practice → revision phases based on time left).
-2. daily_timetable — a full day of time-blocks fitting within ${data.daily_hours} hours of study (plus short breaks). Prioritise weak subjects. Include realistic clock times (24h "HH:MM").
-3. weekly_goals — one entry per week, up to 8 weeks, with 3-5 concrete goals each. Focus each week on specific subjects/chapters.
-4. monthly_goals — one entry per remaining month with 3-5 milestone goals.
+AUTHORITATIVE ICAI NEW SCHEME SYLLABUS (choose chapters ONLY from this list — do not invent, rename, or reference Old Scheme papers):
+${syllabusBlock}
 
-Rules: Be specific. Reference actual subjects. Never invent syllabus not implied by the exam name. Weak subjects get more time and earlier placement in the day. Include a mock test cycle in the final weeks.`;
+Produce:
+1. strategy — 3-6 sentence overall approach (concept-building → practice → revision phases based on time left). Explicitly mention it is aligned to the ICAI New Scheme.
+2. daily_timetable — a full day of time-blocks fitting within ${data.daily_hours} hours of study (plus short breaks). Prioritise weak subjects. Include realistic clock times (24h "HH:MM"). Every "focus_area" MUST be a chapter name copied verbatim from the syllabus above.
+3. weekly_goals — one entry per week, up to 8 weeks, with 3-5 concrete goals. Reference specific chapters from the syllabus. Sequence high-weightage chapters earlier; give heavier weightage bands more revision cycles.
+4. monthly_goals — one entry per remaining month with 3-5 milestone goals tied to syllabus coverage %, mocks, RTP/MTP, and revision rounds.
+
+Hard rules:
+- Only use paper names and chapter names shown in the syllabus block above.
+- Do NOT reference deprecated Old Scheme papers (e.g. "EIS-SM", "Financial Reporting under AS-only", "IPCC", "Corporate & Economic Laws" as a standalone Inter paper, "Enterprise Information Systems", etc.).
+- Weak subjects get more time and earlier placement in the day.
+- Include a mock test cycle (MTP/RTP) in the final weeks and a full revision loop in the last 2 weeks.`;
 }
+
 
 function extractJsonObject(text: string) {
   const cleaned = text.trim().replace(/^```(?:json)?\s*/i, "").replace(/```$/i, "").trim();
