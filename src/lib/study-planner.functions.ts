@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireSupabaseAuthWithMfa } from "@/integrations/supabase/require-mfa";
 import { generateStudyPlanWithAi, type SyllabusPaper } from "@/lib/study-planner.server";
 import { FINAL_CHAPTERS } from "@/lib/icai-syllabus";
 
@@ -124,7 +124,7 @@ async function loadSyllabus(
 }
 
 export const generateStudyPlan = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSupabaseAuthWithMfa])
   .inputValidator((v: unknown) => GenerateInput.parse(v))
   .handler(async ({ context, data }) => {
     const examDate = new Date(data.exam_date);
@@ -233,7 +233,7 @@ export const generateStudyPlan = createServerFn({ method: "POST" })
   });
 
 export const deleteStudyPlan = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSupabaseAuthWithMfa])
   .inputValidator((v: unknown) => z.object({ id: z.string().uuid() }).parse(v))
   .handler(async ({ context, data }) => {
     const { error } = await context.supabase
@@ -245,7 +245,7 @@ export const deleteStudyPlan = createServerFn({ method: "POST" })
   });
 
 export const activateStudyPlan = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSupabaseAuthWithMfa])
   .inputValidator((v: unknown) => z.object({ id: z.string().uuid() }).parse(v))
   .handler(async ({ context, data }) => {
     await context.supabase
@@ -276,7 +276,7 @@ function minutesBetween(start: string, end: string) {
 }
 
 export const syncPlanToTasks = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSupabaseAuthWithMfa])
   .inputValidator((v: unknown) => SyncInput.parse(v))
   .handler(async ({ context, data }) => {
     const { data: plan, error: pErr } = await context.supabase
@@ -367,7 +367,7 @@ const UpdatePlanInput = z.object({
 });
 
 export const updateStudyPlan = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSupabaseAuthWithMfa])
   .inputValidator((v: unknown) => UpdatePlanInput.parse(v))
   .handler(async ({ context, data }) => {
     const patch: {
@@ -397,7 +397,7 @@ const RegenerateDayInput = z.object({
 });
 
 export const regenerateDay = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSupabaseAuthWithMfa])
   .inputValidator((v: unknown) => RegenerateDayInput.parse(v))
   .handler(async ({ context, data }) => {
     const { data: plan, error } = await context.supabase
@@ -484,7 +484,7 @@ const RegenerateRemainingInput = z.object({
 });
 
 export const regenerateRemaining = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSupabaseAuthWithMfa])
   .inputValidator((v: unknown) => RegenerateRemainingInput.parse(v))
   .handler(async ({ context, data }) => {
     const { data: plan, error } = await context.supabase

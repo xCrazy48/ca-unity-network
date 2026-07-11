@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireSupabaseAuthWithMfa } from "@/integrations/supabase/require-mfa";
 
 async function requireAdmin(supabase: unknown, userId: string) {
   const sb = supabase as { rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: { message: string } | null }> };
@@ -18,12 +18,14 @@ async function requireAdmin(supabase: unknown, userId: string) {
 }
 
 export const getAdminStats = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSupabaseAuthWithMfa])
   .handler(async ({ context }) => {
     await requireAdmin(context.supabase, context.userId);
-    // Call via the user's authenticated client so auth.uid() is populated
-    // inside public.get_admin_stats (which re-checks admin role).
-    const { data, error } = await (context.supabase as unknown as {
+    // Call via the service-role client. EXECUTE on public.get_admin_stats
+    // is revoked from `authenticated`; only service_role may invoke it.
+    // Admin authorization has already been enforced above.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await (supabaseAdmin as unknown as {
       rpc: (fn: string) => Promise<{ data: unknown; error: { message: string } | null }>;
     }).rpc("get_admin_stats");
     if (error) throw new Error(error.message);
@@ -31,8 +33,9 @@ export const getAdminStats = createServerFn({ method: "GET" })
   });
 
 
+
 export const logAdminAction = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSupabaseAuthWithMfa])
   .inputValidator((d: { action: string; target_type?: string; target_id?: string; metadata?: Record<string, unknown> }) => {
     if (!d?.action) throw new Error("Missing action");
     return d;
@@ -52,7 +55,7 @@ export const logAdminAction = createServerFn({ method: "POST" })
   });
 
 export const listUsersWithRoles = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSupabaseAuthWithMfa])
   .inputValidator((d: { search?: string; limit?: number }) => ({ search: (d?.search ?? "").trim(), limit: Math.min(d?.limit ?? 50, 200) }))
   .handler(async ({ data, context }) => {
     await requireAdmin(context.supabase, context.userId);
@@ -86,7 +89,7 @@ export const listUsersWithRoles = createServerFn({ method: "POST" })
   });
 
 export const setUserAdminRole = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSupabaseAuthWithMfa])
   .inputValidator((d: { user_id: string; make_admin: boolean }) => {
     if (!d?.user_id) throw new Error("Missing user_id");
     return { user_id: d.user_id, make_admin: !!d.make_admin };
