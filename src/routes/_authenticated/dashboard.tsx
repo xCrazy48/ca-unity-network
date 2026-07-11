@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 
 import { AppShell } from "@/components/app-shell";
-import { QuoteDialog } from "@/components/quote-dialog";
+import { DailyQuote } from "@/components/daily-quote";
 import { MentoringCard } from "@/components/mentoring-card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
