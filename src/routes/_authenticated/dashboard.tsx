@@ -107,7 +107,7 @@ function Dashboard() {
 
   return (
     <AppShell>
-      <QuoteDialog />
+      <DailyQuote />
       {needsOnboarding && (
         <Link
           to="/onboarding"
