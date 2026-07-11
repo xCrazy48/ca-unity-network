@@ -1,5 +1,6 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { motion } from "framer-motion";
+import { useEffect } from "react";
 import {
   ArrowRight,
   BookOpenCheck,
@@ -19,6 +20,7 @@ import {
 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { UnityLogo } from "@/components/logo";
+import { supabase } from "@/integrations/supabase/client";
 
 
 
@@ -35,6 +37,7 @@ export const Route = createFileRoute("/")({
   }),
   component: Landing,
 });
+
 
 const features = [
   { icon: Sparkles, title: "AI Study Planner", body: "Tell us your exam, level, and daily hours — get a personalised daily timetable plus weekly and monthly goals, and one-click sync into your planner." },
