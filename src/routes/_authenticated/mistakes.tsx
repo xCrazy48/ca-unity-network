@@ -342,14 +342,6 @@ function MistakeForm({
             placeholder="e.g. Ind AS 12 — Deferred Tax"
           />
         </Field>
-
-        <Field label="Concept">
-          <Input
-            value={concept}
-            onChange={(e) => setConcept(e.target.value)}
-            placeholder="e.g. Deferred tax on revaluation"
-          />
-        </Field>
         <Field label="Mistake">
           <Textarea
             value={mistake}
