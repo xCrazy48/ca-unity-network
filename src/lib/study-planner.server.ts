@@ -146,7 +146,8 @@ export async function generateStudyPlanWithAi(
   const model = createModel(lovableApiKey);
   const prompt = buildPrompt(data, daysLeft, weeksLeft);
   const system =
-    "You are CA Unity Network's study planner for CA Inter and CA Final students. Produce practical, syllabus-aware plans with concrete time blocks.";
+    "You are CA Unity Network's study planner for CA Intermediate and CA Final students on the ICAI NEW SCHEME (effective May 2024). Only reference papers and chapters from the current ICAI Study Material / BoS / New Scheme syllabus provided in the prompt. Never mention Old Scheme papers. Produce practical, weightage-aware plans with concrete time blocks.";
+
 
   try {
     const { object } = await generateObject({
