@@ -7,17 +7,14 @@ import {
   Brain,
   CalendarDays,
   ClipboardList,
-  FileCheck,
   FlaskConical,
   LayoutDashboard,
-  LibraryBig,
   LineChart,
   ListChecks,
   LogOut,
   MessageCircle,
   Settings,
   Sparkles,
-
   Target,
   Timer,
 } from "lucide-react";
