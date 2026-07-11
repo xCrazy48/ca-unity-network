@@ -57,6 +57,15 @@ type TimetableBlock = {
 };
 type WeeklyGoal = { week: number; label: string; goals: string[] };
 type MonthlyGoal = { month: string; goals: string[] };
+type PlanDayType = "study" | "revision" | "holiday" | "buffer";
+type PlanDay = {
+  date: string;
+  type: PlanDayType;
+  wake: string | null;
+  sleep: string | null;
+  note: string | null;
+  blocks: TimetableBlock[];
+};
 
 const LEVELS = [
   { value: "beginner", label: "Just starting" },
