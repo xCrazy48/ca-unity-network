@@ -363,7 +363,7 @@ function MistakeForm({
         </Button>
         <Button
           onClick={() => save.mutate()}
-          disabled={!concept || !mistake || save.isPending}
+          disabled={!topic || !mistake || save.isPending}
           className="bg-gold text-primary-foreground"
         >
           Save mistake
