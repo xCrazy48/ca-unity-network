@@ -141,20 +141,26 @@ function AuthPage() {
   };
 
   const google = async () => {
+    if (loading) return; // prevent duplicate requests
     setLoading(true);
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
-    });
-    if (result.error) {
-      toast.error("Google sign-in failed");
+    try {
+      const result = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: window.location.origin,
+      });
+      if (result.error) {
+        toast.error(result.error.message || "Google sign-in failed. Please try again.");
+        setLoading(false);
+        return;
+      }
+      if (result.redirected) return; // browser navigating away
+      const needsMfa = await checkMfa();
+      if (needsMfa) { setLoading(false); return; }
+      await afterSignIn("google");
+      navigate({ to: search.redirect ?? "/dashboard" });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Google sign-in failed. Please try again.");
       setLoading(false);
-      return;
     }
-    if (result.redirected) return;
-    const needsMfa = await checkMfa();
-    if (needsMfa) { setLoading(false); return; }
-    await afterSignIn("google");
-    navigate({ to: search.redirect ?? "/dashboard" });
   };
 
   return (
