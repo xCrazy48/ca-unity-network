@@ -154,31 +154,39 @@ export const generateStudyPlan = createServerFn({ method: "POST" })
       );
     }
 
+    const preferenceNotes = buildPreferenceNotes(data);
+    const mergedNotes = [data.notes, preferenceNotes].filter(Boolean).join(" \n\n");
+
     const plan = await generateStudyPlanWithAi(
-      { ...data, student_level: level, student_group: group, syllabus },
+      { ...data, notes: mergedNotes, student_level: level, student_group: group, syllabus },
       key,
       daysLeft,
       weeksLeft,
     );
 
-
     // Build initial plan_days: expand daily_timetable across days up to the exam.
     const capped = Math.min(daysLeft, 90);
+    const bufferDays = Math.min(
+      capped - 1,
+      Math.max(0, typeof data.buffer_days === "number" ? data.buffer_days : 3),
+    );
+    const holidayIdx = data.weekly_holiday ? DAY_IDX[data.weekly_holiday] : -1;
     const planDays: PlanDay[] = [];
     const startDate = new Date();
     startDate.setUTCHours(0, 0, 0, 0);
     for (let i = 0; i < capped; i++) {
       const d = new Date(startDate.getTime() + i * 86400000);
       const iso = d.toISOString().slice(0, 10);
-      // Last 3 days = revision by default
-      const type: PlanDayType = i >= capped - 3 ? "revision" : "study";
+      let type: PlanDayType = "study";
+      if (i >= capped - bufferDays) type = "revision";
+      if (holidayIdx >= 0 && d.getUTCDay() === holidayIdx && type !== "revision") type = "holiday";
       planDays.push({
         date: iso,
         type,
         wake: "06:30",
         sleep: "23:00",
         note: null,
-        blocks: type === "study" ? plan.daily_timetable.map((b) => ({ ...b })) : [],
+        blocks: type === "study" || type === "revision" ? plan.daily_timetable.map((b) => ({ ...b })) : [],
       });
     }
 
