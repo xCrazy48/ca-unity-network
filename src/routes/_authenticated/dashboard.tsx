@@ -24,9 +24,14 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
       { title: "Dashboard · CA Unity Network" },
-      { name: "robots", content: "noindex" },
+      { name: "description", content: "Your CA prep command center: readiness score, next paper countdown, today's tasks, mocks, and mistakes at a glance." },
+      { property: "og:title", content: "Dashboard · CA Unity Network" },
+      { property: "og:description", content: "Your CA prep command center: readiness score, next paper countdown, today's tasks, mocks, and mistakes at a glance." },
+      { property: "og:url", content: "https://caunitynetwork.in/dashboard" },
     ],
+    links: [{ rel: "canonical", href: "https://caunitynetwork.in/dashboard" }],
   }),
+
   component: Dashboard,
 });
 

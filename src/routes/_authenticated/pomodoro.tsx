@@ -17,9 +17,14 @@ export const Route = createFileRoute("/_authenticated/pomodoro")({
   head: () => ({
     meta: [
       { title: "Pomodoro Focus Timer · CA Unity Network" },
-      { name: "robots", content: "noindex" },
+      { name: "description", content: "A distraction-free Pomodoro timer built for CA aspirants — deep focus blocks, breaks, and session tracking." },
+      { property: "og:title", content: "Pomodoro Focus Timer · CA Unity Network" },
+      { property: "og:description", content: "A distraction-free Pomodoro timer built for CA aspirants — deep focus blocks, breaks, and session tracking." },
+      { property: "og:url", content: "https://caunitynetwork.in/pomodoro" },
     ],
+    links: [{ rel: "canonical", href: "https://caunitynetwork.in/pomodoro" }],
   }),
+
   component: PomodoroPage,
 });
 
