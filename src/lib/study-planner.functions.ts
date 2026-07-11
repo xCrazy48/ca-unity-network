@@ -16,10 +16,11 @@ const GenerateInput = z.object({
 });
 
 async function loadSyllabus(
-  supabase: ReturnType<typeof requireSupabaseAuth> extends never ? never : any,
+  supabase: any,
   level: "inter" | "final",
   group: "group_1" | "group_2" | "both",
 ): Promise<SyllabusPaper[]> {
+
   const { data: papers } = await supabase
     .from("papers")
     .select("code,name,paper_group,level,sort_order")
