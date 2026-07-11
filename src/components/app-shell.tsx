@@ -32,7 +32,6 @@ const nav = [
   { to: "/study-planner", label: "AI Study Planner", icon: Sparkles },
   { to: "/mentoring", label: "1:1 Mentoring", icon: MessageCircle },
   { to: "/calendar", label: "Exam Calendar", icon: CalendarDays },
-  { to: "/papers", label: "Papers", icon: LibraryBig },
   { to: "/chapters", label: "Chapters", icon: Target },
   { to: "/mocks", label: "Mock Tests", icon: ClipboardList },
   { to: "/mistakes", label: "Mistake Book", icon: BookMarked },
