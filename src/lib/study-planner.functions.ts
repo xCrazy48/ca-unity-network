@@ -1,7 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { generateStudyPlanWithAi } from "@/lib/study-planner.server";
+import { generateStudyPlanWithAi, type SyllabusPaper } from "@/lib/study-planner.server";
+import { FINAL_CHAPTERS } from "@/lib/icai-syllabus";
 
 const GenerateInput = z.object({
   exam_name: z.string().min(1).max(120),
@@ -13,6 +14,49 @@ const GenerateInput = z.object({
   strong_subjects: z.array(z.string()).default([]),
   notes: z.string().max(1000).optional().nullable(),
 });
+
+async function loadSyllabus(
+  supabase: ReturnType<typeof requireSupabaseAuth> extends never ? never : any,
+  level: "inter" | "final",
+  group: "group_1" | "group_2" | "both",
+): Promise<SyllabusPaper[]> {
+  const { data: papers } = await supabase
+    .from("papers")
+    .select("code,name,paper_group,level,sort_order")
+    .eq("level", level)
+    .order("sort_order");
+  const filtered = (papers ?? []).filter(
+    (p: any) => group === "both" || p.paper_group === group,
+  );
+  const codes = filtered.map((p: any) => p.code);
+  const { data: chaptersRows } = await supabase
+    .from("chapters")
+    .select("paper_code,name,weightage_min,weightage_max,sort_order")
+    .in("paper_code", codes.length ? codes : ["__none__"])
+    .order("sort_order");
+  const byPaper = new Map<string, { name: string; weightage_min: number | null; weightage_max: number | null }[]>();
+  for (const c of chaptersRows ?? []) {
+    const arr = byPaper.get(c.paper_code) ?? [];
+    arr.push({ name: c.name, weightage_min: c.weightage_min, weightage_max: c.weightage_max });
+    byPaper.set(c.paper_code, arr);
+  }
+  return filtered.map((p: any) => {
+    let chapters = byPaper.get(p.code) ?? [];
+    if (chapters.length === 0 && FINAL_CHAPTERS[p.code]) {
+      chapters = FINAL_CHAPTERS[p.code].map((c) => ({
+        name: c.name,
+        weightage_min: c.weightage_min,
+        weightage_max: c.weightage_max,
+      }));
+    }
+    return {
+      code: p.code,
+      name: p.name,
+      group: p.paper_group,
+      chapters,
+    };
+  });
+}
 
 export const generateStudyPlan = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -28,7 +72,23 @@ export const generateStudyPlan = createServerFn({ method: "POST" })
 
     const key = process.env.LOVABLE_API_KEY;
     if (!key) throw new Error("LOVABLE_API_KEY missing");
-    const plan = await generateStudyPlanWithAi(data, key, daysLeft, weeksLeft);
+
+    const { data: profile } = await context.supabase
+      .from("profiles")
+      .select("level,exam_group")
+      .eq("id", context.userId)
+      .maybeSingle();
+    const level = (profile?.level === "final" ? "final" : "inter") as "inter" | "final";
+    const group = ((profile?.exam_group as string) || "both") as "group_1" | "group_2" | "both";
+    const syllabus = await loadSyllabus(context.supabase, level, group);
+
+    const plan = await generateStudyPlanWithAi(
+      { ...data, student_level: level, student_group: group, syllabus },
+      key,
+      daysLeft,
+      weeksLeft,
+    );
+
 
     // Deactivate previous active plan
     await context.supabase
