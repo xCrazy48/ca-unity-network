@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
-import { generateStudyPlan, deleteStudyPlan, activateStudyPlan, syncPlanToTasks } from "@/lib/study-planner.functions";
+import { generateStudyPlan, deleteStudyPlan, activateStudyPlan, syncPlanToTasks, updateStudyPlan } from "@/lib/study-planner.functions";
 import { Link } from "@tanstack/react-router";
 import { ListChecks } from "lucide-react";
 
