@@ -259,11 +259,16 @@ export const updateStudyPlan = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((v: unknown) => UpdatePlanInput.parse(v))
   .handler(async ({ context, data }) => {
-    const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+    const patch: {
+      updated_at: string;
+      daily_timetable?: unknown;
+      strategy?: string;
+      daily_hours?: number;
+    } = { updated_at: new Date().toISOString() };
     if (data.daily_timetable) patch.daily_timetable = data.daily_timetable;
     if (data.strategy !== undefined) patch.strategy = data.strategy;
     if (data.daily_hours !== undefined) patch.daily_hours = data.daily_hours;
-    const { error } = await context.supabase
+    const { error } = await (context.supabase as any)
       .from("study_plans")
       .update(patch)
       .eq("id", data.id)
