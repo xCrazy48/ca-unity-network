@@ -50,16 +50,7 @@ function MistakesPage() {
   const [tab, setTab] = useState<string>("all");
   const [sourceFilter, setSourceFilter] = useState("all");
 
-  const { data: papers } = useQuery({
-    queryKey: ["papers"],
-    queryFn: async () =>
-      (await supabase.from("papers").select("*").order("sort_order")).data ?? [],
-  });
-  const { data: chapters } = useQuery({
-    queryKey: ["chapters"],
-    queryFn: async () =>
-      (await supabase.from("chapters").select("*").order("sort_order")).data ?? [],
-  });
+  const { data: papers } = useUserPapers();
   const { data: mistakes } = useQuery({
     queryKey: ["mistakes"],
     queryFn: async () =>
