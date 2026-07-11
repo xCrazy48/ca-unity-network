@@ -214,13 +214,6 @@ const SyncInput = z.object({
   start_date: z.string().optional(),
 });
 
-type TimetableBlock = {
-  start: string;
-  end: string;
-  subject: string;
-  activity: string;
-  focus_area: string | null;
-};
 
 function minutesBetween(start: string, end: string) {
   const [sh, sm] = start.split(":").map(Number);
