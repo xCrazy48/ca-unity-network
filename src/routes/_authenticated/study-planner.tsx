@@ -541,17 +541,6 @@ function PlanView({ plan }: { plan: {
               <Button variant="outline" size="sm" className="gap-1.5" onClick={addBlock}>
                 <Plus className="h-4 w-4" /> Add block
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-1.5"
-                onClick={() => editBlock(timetable.length, {})}
-                disabled
-                aria-hidden
-                style={{ display: "none" }}
-              >
-                <RefreshCw className="h-4 w-4" />
-              </Button>
             </div>
           </TabsContent>
 
