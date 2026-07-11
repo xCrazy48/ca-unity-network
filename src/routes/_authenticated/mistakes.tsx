@@ -269,13 +269,12 @@ function MistakeForm({
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) throw new Error("Not signed in");
-      const conceptText = topic ? (concept ? `${topic} — ${concept}` : topic) : concept;
       const { error } = await supabase.from("mistakes").insert({
         user_id: user.id,
         source: source as Tables<"mistakes">["source"],
         paper_code: paperCode || null,
         chapter_id: null,
-        concept: conceptText,
+        concept: topic,
         mistake,
         correction: correction || null,
         source_ref: sourceRef || null,
