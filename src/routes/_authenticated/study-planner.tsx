@@ -460,26 +460,99 @@ function PlanView({ plan }: { plan: {
           </TabsList>
 
           <TabsContent value="daily" className="mt-4">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <div className="text-xs text-muted-foreground">
+                Tap any field to edit. Changes autosave to your account.
+              </div>
+              <div className="flex items-center gap-2 text-xs">
+                {saveState === "saving" && (
+                  <span className="inline-flex items-center gap-1 text-muted-foreground">
+                    <Loader2 className="h-3 w-3 animate-spin" /> Saving…
+                  </span>
+                )}
+                {saveState === "saved" && (
+                  <span className="inline-flex items-center gap-1 text-green-600">
+                    <Check className="h-3 w-3" /> Saved
+                  </span>
+                )}
+                {saveState === "dirty" && (
+                  <span className="text-muted-foreground">Unsaved changes…</span>
+                )}
+              </div>
+            </div>
+
             {timetable.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No blocks generated.</p>
+              <p className="text-sm text-muted-foreground">No blocks. Add one below.</p>
             ) : (
               <ul className="space-y-2">
                 {timetable.map((b, i) => (
-                  <li key={i} className="flex items-start gap-3 rounded-lg border border-border p-3">
-                    <div className="w-24 shrink-0 font-mono text-sm text-gold">
-                      {b.start}–{b.end}
+                  <li
+                    key={i}
+                    className="rounded-lg border border-border p-3 sm:flex sm:items-start sm:gap-3"
+                  >
+                    <div className="flex items-center gap-2 sm:w-32 sm:shrink-0">
+                      <Input
+                        type="time"
+                        value={b.start}
+                        onChange={(e) => editBlock(i, { start: e.target.value })}
+                        className="h-8 px-2 font-mono text-xs"
+                      />
+                      <span className="text-muted-foreground">–</span>
+                      <Input
+                        type="time"
+                        value={b.end}
+                        onChange={(e) => editBlock(i, { end: e.target.value })}
+                        className="h-8 px-2 font-mono text-xs"
+                      />
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="font-medium">{b.subject}</div>
-                      <div className="text-sm text-muted-foreground">{b.activity}</div>
-                      {b.focus_area && (
-                        <Badge variant="outline" className="mt-1 text-xs">{b.focus_area}</Badge>
-                      )}
+                    <div className="mt-2 min-w-0 flex-1 space-y-1 sm:mt-0">
+                      <Input
+                        value={b.subject}
+                        onChange={(e) => editBlock(i, { subject: e.target.value })}
+                        placeholder="Subject / paper"
+                        className="h-8 font-medium"
+                      />
+                      <Input
+                        value={b.activity}
+                        onChange={(e) => editBlock(i, { activity: e.target.value })}
+                        placeholder="Activity (e.g. Practice MCQs)"
+                        className="h-8 text-sm"
+                      />
+                      <Input
+                        value={b.focus_area ?? ""}
+                        onChange={(e) => editBlock(i, { focus_area: e.target.value || null })}
+                        placeholder="Chapter / focus area (optional)"
+                        className="h-8 text-xs"
+                      />
+                    </div>
+                    <div className="mt-2 flex justify-end gap-1 sm:mt-0 sm:flex-col">
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => moveBlock(i, -1)} disabled={i === 0} aria-label="Move up">↑</Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => moveBlock(i, 1)} disabled={i === timetable.length - 1} aria-label="Move down">↓</Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => deleteBlock(i)} aria-label="Delete block">
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
                     </div>
                   </li>
                 ))}
               </ul>
             )}
+
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button variant="outline" size="sm" className="gap-1.5" onClick={addBlock}>
+                <Plus className="h-4 w-4" /> Add block
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5"
+                onClick={() => editBlock(timetable.length, {})}
+                disabled
+                aria-hidden
+                style={{ display: "none" }}
+              >
+                <RefreshCw className="h-4 w-4" />
+              </Button>
+            </div>
           </TabsContent>
 
           <TabsContent value="weekly" className="mt-4 space-y-3">
